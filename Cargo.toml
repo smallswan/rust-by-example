@@ -1,0 +1,9 @@
+[package]
+name = "rust-by-example"
+version = "0.1.0"
+authors = ["zhiluniao <huangshunle_gxu@163.com>"]
+edition = "2018"
+
+[dependencies]
+regex = "1"
+lazy_static = "1.4.0"
