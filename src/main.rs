@@ -3,12 +3,24 @@
 extern crate lazy_static;
 
 use regex::Regex;
+use std::collections::HashMap;
 const TO_SEARCH: &'static str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
-
 const VERIFY_CODE: &'static str = "0123456789ABCDEFGHJKLMNPQRTUWXY";
-
 lazy_static!{
        static ref RE: Regex = Regex::new("^([0-9ABCDEFGY]{1})([1239]{1})([0-9ABCDEFGHJKLMNPQRTUWXY]{6})([0-9ABCDEFGHJKLMNPQRTUWXY]{9})([0-90-9ABCDEFGHJKLMNPQRTUWXY])$").unwrap();
+
+       static ref WEIGHT: Vec<usize> = vec![1, 3, 9, 27, 19, 26, 16, 17, 20, 29, 25, 13, 8, 24, 10, 30, 28];
+
+       static ref VERIFY_CODE_MAP: HashMap<char,usize> = {
+           let verify_code = "0123456789ABCDEFGHJKLMNPQRTUWXY";
+           let verify_code_vec :Vec<char> = verify_code.chars().collect();
+           let mut verify_code_map = HashMap::new();
+           for i in 0..verify_code.len(){
+               verify_code_map.insert(verify_code_vec[i],i);
+               println!("{}-->{}",verify_code_vec[i],i);
+           }
+           verify_code_map
+       };
 }
 
 use std::mem;
@@ -93,21 +105,43 @@ fn main() {
         Solders => println!("Solders fight."),
     }
 
-    println!("Hello, world!");
-    let identifier = "91330109MA27WFB10H";
-    println!("{} is {}",identifier,is_unified_social_credit_identifier(identifier));
+    let identifiers = vec!["", "   ", "91512081MA62K0260E", "91370200163562681G",
+                           "9137V2O0163562681G" ,"123456789012345678", "91330106MA2B27HM90","91110108585852240Q","31430000MD0217741Q","410302600144140","92510107MA62M3M24U","9114021105885245XE","91330109MA27WFB10H","92320303MA1NGJ535N","92320303MA1NG535N","92420502MA4AF3986P","91420502MA4AF3986P","92370902MA3QTFEQXN","92130827MA0E9FUBOY" ];
 
-    let identifier = "Q1330109MA27WFB10H";
-    println!("{} is {}",identifier,is_unified_social_credit_identifier(identifier));
+    for id in &identifiers {
+        println!("{} is valid :{}",id,is_unified_social_credit_identifier(id));
+    }
+
 }
 
 fn is_unified_social_credit_identifier(identifier : &str) -> bool{
-    assert!(!identifier.is_empty());
-    assert_eq!(18 , identifier.trim().len());
-    println!("{}",identifier.trim());
-
-    for c in VERIFY_CODE.chars(){
-        println!("{}",c);
+    if !RE.is_match(identifier){
+        println!("{} not match regex",identifier);
+        return false
     }
-    RE.is_match(identifier)
+    let identifier_chars : Vec<char> = identifier.chars().collect();
+    let mut sum = 0;
+    for i in 0..17{
+        let ch = identifier_chars[i];
+        if let Some(index) = VERIFY_CODE_MAP.get(&ch){
+            sum = sum + index * WEIGHT[i];
+        }
+    }
+    //println!("{} --> sum={}",identifier ,sum);
+
+    let mut temp = sum%31;
+    if temp != 0{
+        //println!("{:?}",temp);
+    }else{
+        //println!("change it");
+        temp = 31;
+    }
+    let c18 = 31 - temp;
+    //println!("c18={}",c18);
+    let verify_code = identifier_chars[17];
+    if let Some(index) = VERIFY_CODE_MAP.get(&verify_code){
+        c18 == *index
+    }else{
+        false
+    }
 }
