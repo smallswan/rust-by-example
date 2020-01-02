@@ -83,4 +83,8 @@ fn main() {
     }
     validators::is_unified_social_credit_identifier("92130827MA0E9FUBOY");
     validators::is_18_id_card("452726");
+
+    let filtered_name = validators::filter_company_name("\\中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【】‘；：\"”“’。，、？《》\",\"Hong Kong ABC Company(DEF branch)（中文括号）");
+
+    println!("{}",filtered_name);
 }

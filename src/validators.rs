@@ -17,7 +17,8 @@ lazy_static! {
         println!("{:?}",verify_code_map);
         verify_code_map
     };
-
+    // 公司名称需要排除的字符串，不包含中英文括号
+    static ref REGEX_NOT_COMPANY_NAME: Regex = Regex::new(r###"[`~!@#$%^&*+=|{}':;',\\.<>《》/?~！@#￥%……&*——+|{}\[\]【】‘；："”“’。，、？]"###).unwrap();
 }
 pub fn is_18_id_card(id_card_no: &str) -> bool {
     if !REGEX_18_ID_CARD_NO.is_match(id_card_no) {
@@ -76,6 +77,12 @@ pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
     } else {
         false
     }
+}
+
+pub fn filter_company_name(company_name: &str) -> String{
+
+    let filtered = REGEX_NOT_COMPANY_NAME.replace_all(company_name,"");
+    filtered.to_string()
 }
 
 #[test]
