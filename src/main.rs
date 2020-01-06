@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #[macro_use]
 extern crate lazy_static;
+
 mod validators;
 
 const TO_SEARCH: &'static str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
