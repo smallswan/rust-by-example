@@ -51,6 +51,15 @@ pub fn is_18_id_card(id_card_no: &str) -> bool {
     check_code == id_card_no_chars[17]
 }
 
+/// 校验法人和其他组织的统一社会信用代码（详情见 https://baike.baidu.com/item/%E6%B3%95%E4%BA%BA%E5%92%8C%E5%85%B6%E4%BB%96%E7%BB%84%E7%BB%87%E7%BB%9F%E4%B8%80%E7%A4%BE%E4%BC%9A%E4%BF%A1%E7%94%A8%E4%BB%A3%E7%A0%81/17702814?fromtitle=%E7%BB%9F%E4%B8%80%E7%A4%BE%E4%BC%9A%E4%BF%A1%E7%94%A8%E4%BB%A3%E7%A0%81&fromid=18754790&fr=aladdin）
+/// 校验算法参考：https://blog.csdn.net/u013361668/article/details/51595169
+///
+/// #Example
+/// ```
+/// let result = validators::is_unified_social_credit_identifier("91450100MA5MYH3E16");
+/// assert_eq!(result,true);
+/// ```
+///
 pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
     if !IDENTIFIER_REGEX.is_match(identifier) {
         println!("{} not match regex", identifier);
