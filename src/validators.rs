@@ -88,9 +88,8 @@ pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
     }
 }
 
-pub fn filter_company_name(company_name: &str) -> String{
-
-    let filtered = REGEX_NOT_COMPANY_NAME.replace_all(company_name,"");
+pub fn filter_company_name(company_name: &str) -> String {
+    let filtered = REGEX_NOT_COMPANY_NAME.replace_all(company_name, "");
     filtered.to_string()
 }
 

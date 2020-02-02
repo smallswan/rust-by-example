@@ -48,6 +48,27 @@ impl List {
     }
 }
 
+use std::collections::HashMap;
+pub fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {
+    let mut nums_map = HashMap::<i32, i32>::new();
+    let mut i = 0;
+//    let mut result = Vec::new();
+    for num in nums {
+        let complement = target - num;
+
+        let j = i as i32;
+        if let Some(idx) = nums_map.get(&complement) {
+            return vec![*idx,j];
+            //result.push(*idx);
+            //result.push(j);
+            //break;
+        }
+        nums_map.insert(num, j);
+        i += 1;
+    }
+    vec![]
+}
+
 fn main() {
     println!("Hello, world!");
 
@@ -87,5 +108,10 @@ fn main() {
 
     let filtered_name = validators::filter_company_name("\\中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【】‘；：\"”“’。，、？《》\",\"Hong Kong ABC Company(DEF branch)（中文括号）");
 
-    println!("{}",filtered_name);
+    println!("{}", filtered_name);
+
+    let nums = vec![2, 7, 2, 11];
+    let result = two_sum(nums, 9);
+
+    println!("{:?}", result);
 }

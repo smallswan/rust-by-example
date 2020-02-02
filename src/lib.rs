@@ -84,7 +84,7 @@ mod tests {
     use regex::Regex;
 
     #[test]
-    fn regex_demo(){
+    fn regex_demo() {
         let re = Regex::new(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})").unwrap();
         let before = "2012-03-14, 2013-01-01 and 2014-07-05";
         let after = re.replace_all(before, "$m/$d/$y");
@@ -96,17 +96,18 @@ mod tests {
     }
 
     #[test]
-    fn rand_demo(){
-        if rand::random(){
+    fn rand_demo() {
+        if rand::random() {
             println!("char: {}", rand::random::<char>());
         }
 
         let mut rng = rand::thread_rng();
         let y: f64 = rng.gen();
-        println!("{}",y);
+        println!("{}", y);
         let mut nums: Vec<i32> = (1..100).collect();
         nums.shuffle(&mut rng);
 
-        println!("{:?}",nums)
+        println!("{:?}", nums)
     }
+
 }
