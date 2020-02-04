@@ -82,17 +82,163 @@ pub fn pivot_index(nums: Vec<i32>) -> i32 {
     for num in &nums {
         sum += *num;
     }
-    let mut index = -1;
     let mut left_sum = 0;
     for (idx, num) in nums.iter().enumerate() {
         if *num + left_sum * 2 == sum {
-            index = idx as i32;
-            break;
+            return idx as i32;
         }
         left_sum += *num;
     }
-    index
+    -1
 }
+
+/// 力扣第747题 https://leetcode-cn.com/problems/largest-number-at-least-twice-of-others/submissions/
+pub fn dominant_index(nums: Vec<i32>) -> i32 {
+    let mut idx = 0;
+    let mut max = nums[idx];
+    // 找出最大值及其下表
+    for (i, num) in nums.iter().enumerate() {
+        if *num > max {
+            max = *num;
+            idx = i;
+        }
+    }
+    //println!("max:{},idx:{}",max,idx);
+    // 找出第二大的数,最小的值为0
+    let mut second_biggest = 0;
+    for (i, num) in nums.iter().enumerate() {
+        if idx != i && *num > second_biggest {
+            second_biggest = *num;
+        } else {
+            continue;
+        }
+    }
+
+    //println!("second_biggest:{}",second_biggest);
+    if max >= 2 * second_biggest {
+        return idx as i32;
+    }
+    -1
+}
+
+pub fn find_diagonal_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
+    let m = matrix.len();
+    if m == 0 {
+        return vec![];
+    }
+    let n = matrix[0].len();
+
+    let mut result = Vec::<i32>::with_capacity(m * n);
+
+    let mut i = 0;
+    let mut j = 0;
+    for _ in 0..m * n {
+        result.push(matrix[i][j]);
+        if (i + j) % 2 == 0 {
+            //往右上角移动，即i-,j+
+            if j == n - 1 {
+                i += 1;
+            } else if i == 0 {
+                j += 1;
+            } else {
+                i -= 1;
+                j += 1;
+            }
+        } else {
+            //往左下角移动，即i+,j-
+            if i == m - 1 {
+                j += 1;
+            } else if j == 0 {
+                i += 1;
+            } else {
+                i += 1;
+                j -= 1;
+            }
+        }
+    }
+
+    result
+}
+
+/// 力扣第54题 https://leetcode-cn.com/problems/spiral-matrix/
+pub fn spiral_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
+    let m = matrix.len();
+    if m == 0 {
+        return vec![];
+    }
+    let n = matrix[0].len();
+
+    let mut result = Vec::<i32>::with_capacity(m * n);
+
+    let mut i = 0;
+    let mut j = 0;
+    let mut x = m - 1; //i的最大值
+    let mut y = n - 1; //j的最大值
+    let mut s = 0; //i的最小值
+    let mut t = 0; //j的最小值
+    let mut direct = 0;
+
+    let mut push_times = 1;
+    result.push(matrix[0][0]);
+
+    while push_times < m * n {
+        match direct % 4 {
+            0 => {
+                //右
+                if j < y {
+                    j += 1;
+                    result.push(matrix[i][j]);
+                    push_times += 1;
+                    continue;
+                } else {
+                    s += 1;
+                    direct += 1;
+                }
+            }
+            1 => {
+                //下
+                if i < x {
+                    i += 1;
+                    result.push(matrix[i][j]);
+                    push_times += 1;
+                    continue;
+                } else {
+                    y -= 1;
+                    direct += 1;
+                }
+            }
+            2 => {
+                //左
+                if j > t {
+                    j -= 1;
+                    result.push(matrix[i][j]);
+                    push_times += 1;
+                    continue;
+                } else {
+                    x -= 1;
+                    direct += 1;
+                }
+            }
+            3 => {
+                //上
+                if i > s {
+                    i -= 1;
+                    result.push(matrix[i][j]);
+                    push_times += 1;
+                    continue;
+                } else {
+                    t += 1;
+                    direct += 1;
+                }
+            }
+            _ => {
+                println!("不可能发生这种情况");
+            }
+        }
+    }
+    result
+}
+
 fn main() {
     println!("Hello, world!");
 
@@ -148,4 +294,17 @@ fn main() {
     println!("{}", geometric_series_sum(1.0, 2.0, 20));
 
     println!("index:{}", pivot_index(vec![1, 7, 3, 6, 5, 6]));
+
+    println!("{}", dominant_index(vec![2]));
+
+    //vec![[1,2,3],[4,5,6],[7,8,9]]
+    let mut matrix = Vec::<Vec<i32>>::new();
+    matrix.push(vec![1, 2, 3, 4]);
+    matrix.push(vec![5, 6, 7, 8]);
+    matrix.push(vec![9, 10, 11, 12]);
+
+    println!("{:?}", matrix);
+    //    println!("{:?}",find_diagonal_order(matrix));
+
+    println!("{:?}", spiral_order(matrix));
 }
