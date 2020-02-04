@@ -49,26 +49,50 @@ impl List {
 }
 
 use std::collections::HashMap;
+/// 力扣第1题 https://leetcode-cn.com/problems/two-sum
 pub fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {
     let mut nums_map = HashMap::<i32, i32>::new();
-    let mut i = 0;
-//    let mut result = Vec::new();
-    for num in nums {
+    for (idx, num) in nums.into_iter().enumerate() {
         let complement = target - num;
 
-        let j = i as i32;
+        let j = idx as i32;
         if let Some(idx) = nums_map.get(&complement) {
-            return vec![*idx,j];
-            //result.push(*idx);
-            //result.push(j);
-            //break;
+            return vec![*idx, j];
         }
         nums_map.insert(num, j);
-        i += 1;
     }
     vec![]
 }
 
+fn interest_rate(capital: f64, rate: f64, period: f64) -> f64 {
+    let total = capital * (1.0 + rate).powf(period);
+    total
+}
+/// 等比数列求和
+fn geometric_series_sum(a1: f64, q: f64, n: u32) -> f64 {
+    match q {
+        x if x == 1.0 => (n as f64) * a1,
+        _ => a1 * (1.0 - q.powf(n as f64)) / (1.0 - q),
+    }
+}
+
+/// 力扣第724题 https://leetcode-cn.com/problems/find-pivot-index/
+pub fn pivot_index(nums: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for num in &nums {
+        sum += *num;
+    }
+    let mut index = -1;
+    let mut left_sum = 0;
+    for (idx, num) in nums.iter().enumerate() {
+        if *num + left_sum * 2 == sum {
+            index = idx as i32;
+            break;
+        }
+        left_sum += *num;
+    }
+    index
+}
 fn main() {
     println!("Hello, world!");
 
@@ -114,4 +138,14 @@ fn main() {
     let result = two_sum(nums, 9);
 
     println!("{:?}", result);
+
+    let total = interest_rate(20000.00, 0.0488, 1.0);
+
+    println!("{}", total);
+
+    println!("{}", 3i32.pow(2));
+
+    println!("{}", geometric_series_sum(1.0, 2.0, 20));
+
+    println!("index:{}", pivot_index(vec![1, 7, 3, 6, 5, 6]));
 }
