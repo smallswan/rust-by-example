@@ -239,6 +239,28 @@ pub fn spiral_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
     result
 }
 
+/// 力扣（118. 杨辉三角） https://leetcode-cn.com/problems/pascals-triangle/
+pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
+    let rows = num_rows as usize;
+    let mut result = Vec::<Vec<i32>>::with_capacity(rows);
+
+    for row in 1..=rows {
+        if row <= 2 {
+            let r = vec![1; row];
+            result.push(r);
+        } else {
+            if let Some(last_row) = result.last() {
+                let mut r = vec![1; row];
+                for i in 1..row - 1 {
+                    r[i] = last_row[i - 1] + last_row[i];
+                }
+                result.push(r);
+            }
+        }
+    }
+    result
+}
+
 fn main() {
     println!("Hello, world!");
 
@@ -307,4 +329,6 @@ fn main() {
     //    println!("{:?}",find_diagonal_order(matrix));
 
     println!("{:?}", spiral_order(matrix));
+
+    println!("{:?}", generate(10));
 }
