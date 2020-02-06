@@ -285,6 +285,54 @@ pub fn plus_one(digits: Vec<i32>) -> Vec<i32> {
     new_digits
 }
 
+/// 力扣（67. 二进制求和） https://leetcode-cn.com/problems/add-binary/
+///
+pub fn add_binary(a: String, b: String) -> String {
+    let mut result = String::new();
+    let mut ca = 0;
+    let mut s = true;
+    let mut t = true;
+    let mut a_rev = a.chars().rev();
+    let mut b_rev = b.chars().rev();
+
+    while s || t {
+        let mut sum = ca;
+
+        if let Some(x) = a_rev.next() {
+            let temp = x as i32 - 48;
+
+            sum += temp;
+        } else {
+            s = false;
+        }
+
+        if let Some(x) = b_rev.next() {
+            let temp = x as i32 - 48;
+            sum += temp;
+        } else {
+            t = false;
+        }
+
+        if s == false && t == false{
+            break;
+        }
+
+        if sum % 2 == 0 {
+            result.push('0');
+        } else {
+            result.push('1');
+        }
+        ca = sum / 2;
+
+    }
+
+    if ca == 1 {
+        result.push('1');
+    }
+    //字符串翻转
+    let result = result.chars().rev().collect();
+    result
+}
 fn main() {
     println!("Hello, world!");
 
@@ -356,5 +404,10 @@ fn main() {
 
     println!("{:?}", generate(10));
 
-    println!("{:?}", plus_one(vec![9, 1,9]));
+    println!("{:?}", plus_one(vec![9, 1, 9]));
+
+    //use std::string::String;
+    let a = String::from("0");
+    let b = String::from("0");
+    println!("{}", add_binary(a, b));
 }
