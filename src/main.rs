@@ -260,6 +260,51 @@ pub fn generate(num_rows: i32) -> Vec<Vec<i32>> {
     }
     result
 }
+/// 力扣（66. 加一） https://leetcode-cn.com/problems/plus-one/
+pub fn plus_one(digits: Vec<i32>) -> Vec<i32> {
+    let mut new_digits = Vec::<i32>::new();
+    let len = digits.len();
+    let last_digit = digits[len - 1];
+    let b = last_digit == 9; //最后一位加一是否进位
+
+    if b {
+        let mut digits2 = vec![0; len + 1];
+        digits2[len] = 1;
+        let mut idx = len;
+        //倒序遍历digits2
+        for _ in 0..len {
+            let x = digits[idx - 1];
+            let y = digits2[idx];
+
+            if y == 1 {
+                if x == 9 {
+                    digits2[idx - 1] = 1; //进位
+                    digits2[idx] = 0; //当前位置为0
+                } else {
+                    digits2[idx] = x + y;
+                }
+            } else {
+                digits2[idx] = x;
+            }
+
+            idx -= 1;
+        }
+
+        if digits2[0] == 1 {
+            return digits2;
+        } else {
+            for i in 1..=len {
+                new_digits.push(digits2[i]);
+            }
+        }
+    } else {
+        for i in 0..len - 1 {
+            new_digits.push(digits[i]);
+        }
+        new_digits.push(last_digit + 1);
+    }
+    new_digits
+}
 
 fn main() {
     println!("Hello, world!");
@@ -331,4 +376,6 @@ fn main() {
     println!("{:?}", spiral_order(matrix));
 
     println!("{:?}", generate(10));
+
+    println!("{:?}", plus_one(vec![9, 9]));
 }
