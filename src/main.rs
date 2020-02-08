@@ -313,7 +313,7 @@ pub fn add_binary(a: String, b: String) -> String {
             t = false;
         }
 
-        if s == false && t == false{
+        if s == false && t == false {
             break;
         }
 
@@ -323,7 +323,6 @@ pub fn add_binary(a: String, b: String) -> String {
             result.push('1');
         }
         ca = sum / 2;
-
     }
 
     if ca == 1 {
@@ -333,6 +332,60 @@ pub fn add_binary(a: String, b: String) -> String {
     let result = result.chars().rev().collect();
     result
 }
+
+/// 力扣（28. 实现 strStr()）  https://leetcode-cn.com/problems/implement-strstr/
+pub fn str_str(haystack: String, needle: String) -> i32 {
+    // 参考Java String.indexOf()的代码
+    let source = haystack.as_bytes();
+    let target = needle.as_bytes();
+
+    let source_offset = 0usize;
+    let source_count = source.len();
+    let target_offset = 0usize;
+    let target_count = target.len();
+    let from_index = 0usize;
+    if target_count == 0usize {
+        return 0;
+    }
+
+    if  target_count  > source_count{
+        return -1;
+    }
+
+    let first = target[target_offset];
+    let max = source_offset + (source_count - target_count);
+
+    let mut i = source_offset + from_index;
+    while i <= max {
+        while source[i] != first {
+            i += 1;
+            if i <= max {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        if i <= max {
+            let mut j = i + 1;
+            let end = j + target_count - 1;
+            let mut k = target_offset + 1;
+            while j < end && source[j] == target[k] {
+                j += 1;
+                k += 1;
+            }
+
+            if j == end {
+                return (i - source_offset) as i32;
+            }
+        }
+
+        i+=1;
+    }
+
+    -1
+}
+
 fn main() {
     println!("Hello, world!");
 
@@ -410,4 +463,8 @@ fn main() {
     let a = String::from("0");
     let b = String::from("0");
     println!("{}", add_binary(a, b));
+
+    let haystack = String::from("aaacaaab");
+    let needle = String::from("aaab");
+    println!("idx:{}", str_str(haystack, needle));
 }
