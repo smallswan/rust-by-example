@@ -348,7 +348,7 @@ pub fn str_str(haystack: String, needle: String) -> i32 {
         return 0;
     }
 
-    if  target_count  > source_count{
+    if target_count > source_count {
         return -1;
     }
 
@@ -380,10 +380,51 @@ pub fn str_str(haystack: String, needle: String) -> i32 {
             }
         }
 
-        i+=1;
+        i += 1;
     }
 
     -1
+}
+
+/// 力扣（14. 最长公共前缀） https://leetcode-cn.com/problems/longest-common-prefix/
+pub fn longest_common_prefix(strs: Vec<String>) -> String {
+    let len = strs.len();
+    if len == 0 {
+        return String::from("");
+    } else if len == 1 {
+        let first = strs[0].clone();
+        return first;
+    }
+    let mut idx = 0; //最长前缀的下标
+    let mut result = String::new();
+    let first_str = &strs[0];
+    let first_str_len = first_str.len();
+    'outer: while idx < first_str_len {
+        let first_char = first_str.as_bytes()[idx];
+        let mut i = 1; //统计相同字符的数量
+        for j in 1..len {
+            let bytes = strs[j].as_bytes();
+            if bytes.len() <= idx {
+                break 'outer;
+            }
+            if bytes[idx] == first_char {
+                i += 1;
+            } else {
+                break 'outer;
+            }
+
+            if i == len {
+                result.push(first_char as char);
+                idx += 1;
+                if idx < first_str_len {
+                    i = 1;
+                } else {
+                    break 'outer;
+                }
+            }
+        }
+    }
+    result
 }
 
 fn main() {
@@ -467,4 +508,12 @@ fn main() {
     let haystack = String::from("aaacaaab");
     let needle = String::from("aaab");
     println!("idx:{}", str_str(haystack, needle));
+
+    // vec!["abc","abs","abd"
+    let mut strs = Vec::new();
+    strs.push(String::from("abcde"));
+    //strs.push(String::from(""));
+    strs.push(String::from("abs"));
+    strs.push(String::from("abcd"));
+    println!("common:{}", longest_common_prefix(strs));
 }
