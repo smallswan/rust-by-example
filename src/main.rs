@@ -390,41 +390,36 @@ pub fn str_str(haystack: String, needle: String) -> i32 {
 pub fn longest_common_prefix(strs: Vec<String>) -> String {
     let len = strs.len();
     if len == 0 {
-        return String::from("");
-    } else if len == 1 {
-        let first = strs[0].clone();
-        return first;
+        return "".to_owned();
     }
-    let mut idx = 0; //最长前缀的下标
-    let mut result = String::new();
-    let first_str = &strs[0];
-    let first_str_len = first_str.len();
-    'outer: while idx < first_str_len {
-        let first_char = first_str.as_bytes()[idx];
-        let mut i = 1; //统计相同字符的数量
-        for j in 1..len {
-            let bytes = strs[j].as_bytes();
-            if bytes.len() <= idx {
-                break 'outer;
-            }
-            if bytes[idx] == first_char {
-                i += 1;
-            } else {
-                break 'outer;
-            }
+    let mut prefix = &strs[0][..];
+    let mut i = 1;
+    let mut idx = -1;
+    while i < len {
+        let next_str = &strs[i][..];
+        match next_str.find(prefix) {
+            None => idx = -1,
+            Some(i) => idx = i as i32,
+        }
 
-            if i == len {
-                result.push(first_char as char);
-                idx += 1;
-                if idx < first_str_len {
-                    i = 1;
-                } else {
-                    break 'outer;
+        while idx != 0 {
+            if let Some(p) = prefix.get(0..prefix.len() - 1) {
+                prefix = p;
+                if prefix.is_empty() {
+                    return "".to_owned();
                 }
             }
+
+            match next_str.find(prefix) {
+                None => idx = -1,
+                Some(i) => idx = i as i32,
+            }
         }
+        i += 1;
     }
-    result
+
+    println!("idx4:{}",idx);//这条表达式仅仅为了编译通过
+    prefix.to_owned()
 }
 
 fn main() {
@@ -511,9 +506,15 @@ fn main() {
 
     // vec!["abc","abs","abd"
     let mut strs = Vec::new();
-    strs.push(String::from("abcde"));
-    //strs.push(String::from(""));
-    strs.push(String::from("abs"));
-    strs.push(String::from("abcd"));
+    strs.push(String::from("cdf"));
+    //strs.push(String::from("acc"));
+    strs.push(String::from("cd"));
+    strs.push(String::from("cde"));
+    //    strs.push(String::from("abscd"));
     println!("common:{}", longest_common_prefix(strs));
+
+    //let s = "Löwe 老虎 Léopard";
+    let t = String::from("Löwe 老虎 Léopard");
+    let t1 = &t[..];
+    assert_eq!(t1.find("Léopard"), Some(13));
 }
