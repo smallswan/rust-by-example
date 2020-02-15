@@ -422,6 +422,45 @@ pub fn longest_common_prefix(strs: Vec<String>) -> String {
     prefix.to_owned()
 }
 
+/// 力扣（344. 反转字符串） https://leetcode-cn.com/problems/reverse-string/
+pub fn reverse_string(s: &mut Vec<char>) {
+    let len = s.len();
+    if len > 1 {
+        let mut i = 0;
+        let half = len / 2;
+        while i < half {
+            let x = s[i];
+            s[i] = s[len - i - 1];
+            s[len - i - 1] = x;
+            i+=1;
+        }
+    }
+
+}
+
+/// 力扣（561. 数组拆分 I） https://leetcode-cn.com/problems/array-partition-i/
+pub fn array_pair_sum(nums: Vec<i32>) -> i32 {
+    let len = nums.len();
+    if len %2 != 0{
+        panic!("数组长度必须为偶数");
+    }
+
+    let mut nums_sort = Vec::<i32>::with_capacity(len);
+    for i in 0..len{
+      nums_sort.push(nums[i]);
+    }
+    nums_sort.sort();
+
+    let mut sum = 0;
+    for i in 0.. len/2{
+        sum += nums_sort[2*i];
+    }
+
+    sum
+}
+
+
+
 fn main() {
     println!("Hello, world!");
 
@@ -517,4 +556,23 @@ fn main() {
     let t = String::from("Löwe 老虎 Léopard");
     let t1 = &t[..];
     assert_eq!(t1.find("Léopard"), Some(13));
+
+
+    let mut chars = Vec::<char>::new();
+    chars.push('a');
+    chars.push('b');
+    chars.push('c');
+    chars.push('d');
+//    chars.push('e');
+
+    reverse_string(&mut chars);
+
+    println!("{:?}",chars);
+
+    let mut nums = Vec::<i32>::new();
+    nums.push(1);
+    nums.push(4);
+//    nums.push(3);
+//    nums.push(2);
+    println!("sum:{}",array_pair_sum(nums));
 }
