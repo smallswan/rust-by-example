@@ -1,13 +1,18 @@
 #![allow(dead_code)]
 #[macro_use]
 extern crate lazy_static;
+extern crate chrono;
 
+mod datetime;
+mod snowflake;
 mod validators;
 
 const TO_SEARCH: &'static str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
 use std::mem;
 use List::*;
+
+use chrono::prelude::*;
 
 enum Wealth {
     Rich,
@@ -418,7 +423,7 @@ pub fn longest_common_prefix(strs: Vec<String>) -> String {
         i += 1;
     }
 
-    println!("idx4:{}",idx);//这条表达式仅仅为了编译通过
+    println!("idx4:{}", idx); //这条表达式仅仅为了编译通过
     prefix.to_owned()
 }
 
@@ -432,34 +437,31 @@ pub fn reverse_string(s: &mut Vec<char>) {
             let x = s[i];
             s[i] = s[len - i - 1];
             s[len - i - 1] = x;
-            i+=1;
+            i += 1;
         }
     }
-
 }
 
 /// 力扣（561. 数组拆分 I） https://leetcode-cn.com/problems/array-partition-i/
 pub fn array_pair_sum(nums: Vec<i32>) -> i32 {
     let len = nums.len();
-    if len %2 != 0{
+    if len % 2 != 0 {
         panic!("数组长度必须为偶数");
     }
 
     let mut nums_sort = Vec::<i32>::with_capacity(len);
-    for i in 0..len{
-      nums_sort.push(nums[i]);
+    for i in 0..len {
+        nums_sort.push(nums[i]);
     }
     nums_sort.sort();
 
     let mut sum = 0;
-    for i in 0.. len/2{
-        sum += nums_sort[2*i];
+    for i in 0..len / 2 {
+        sum += nums_sort[2 * i];
     }
 
     sum
 }
-
-
 
 fn main() {
     println!("Hello, world!");
@@ -557,22 +559,32 @@ fn main() {
     let t1 = &t[..];
     assert_eq!(t1.find("Léopard"), Some(13));
 
-
     let mut chars = Vec::<char>::new();
     chars.push('a');
     chars.push('b');
     chars.push('c');
     chars.push('d');
-//    chars.push('e');
+    //    chars.push('e');
 
     reverse_string(&mut chars);
 
-    println!("{:?}",chars);
+    println!("{:?}", chars);
 
     let mut nums = Vec::<i32>::new();
     nums.push(1);
     nums.push(4);
-//    nums.push(3);
-//    nums.push(2);
-    println!("sum:{}",array_pair_sum(nums));
+    //    nums.push(3);
+    //    nums.push(2);
+    println!("sum:{}", array_pair_sum(nums));
+
+    datetime::formatting_and_parsing();
+
+    let mut id_worker = snowflake::SnowflakeIdWorker::new(2, 1);
+
+    let start_time = Local::now().timestamp_millis();
+    for _ in 0..1000_000 {
+        id_worker.next_id();
+//        println!("{}", );
+    }
+    println!("耗时（ms）{}",Local::now().timestamp_millis() - start_time);
 }
