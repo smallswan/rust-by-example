@@ -83,5 +83,18 @@ fn til_next_millis(last_timestamp: i64) -> i64 {
 
 /// 前时间(毫秒)
 fn time_gen() -> i64 {
-    Local::now().timestamp_millis()
+    // Local::now().timestamp_millis()方法比java 的System.currentTimeMillis();方法要慢很多
+    // Utc::now().timestamp_millis() 速度与 System.currentTimeMillis() 相近
+    Utc::now().timestamp_millis()
+}
+
+#[test]
+fn elapse_test(){
+    let times = 1000_000;
+    let start_time = Local::now().timestamp_millis();
+    for _ in 0..times{
+        time_gen();
+    }
+
+    println!("{} times elapsed (ms) :{}",times, Local::now().timestamp_millis() - start_time);
 }
