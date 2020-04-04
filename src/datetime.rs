@@ -39,4 +39,16 @@ pub fn formatting_and_parsing() {
     println!("local:{}", local);
     println!("local timestamp_millis:{}", local.timestamp_millis());
 
+    //
+    let this_year = Utc.ymd(2020, 1, 1).and_hms(0, 0, 0);
+
+    println!("{:?}", this_year.timestamp_millis());
+
+    let birthday = Utc.ymd(1990, 6, 29).and_hms(21, 0, 0);
+
+    let age = Utc::now().signed_duration_since(birthday);
+
+    println!("{:?}", age);
+
+    println!("{}", Local::now().to_rfc3339());
 }

@@ -1,7 +1,7 @@
 extern crate chrono;
 use chrono::prelude::*;
 
-const TWEPOCH: i64 = 1420041600000i64;
+const TWEPOCH: i64 = 1577836800000i64; //2020-01-01 UTC
 const WORKER_ID_BITS: i64 = 5i64;
 const DATA_CENTER_ID_BITS: i64 = 5i64;
 const MAX_WORKER_ID: i64 = 31i64;
@@ -89,12 +89,31 @@ fn time_gen() -> i64 {
 }
 
 #[test]
-fn elapse_test(){
+fn elapse_test() {
     let times = 1000_000;
-    let start_time = Local::now().timestamp_millis();
-    for _ in 0..times{
+    let start_time = Utc::now().timestamp_millis();
+    for _ in 0..times {
         time_gen();
     }
 
-    println!("{} times elapsed (ms) :{}",times, Local::now().timestamp_millis() - start_time);
+    println!(
+        "{} times elapsed (ms) :{}",
+        times,
+        Utc::now().timestamp_millis() - start_time
+    );
+
+    let mut id_worker = SnowflakeIdWorker::new(2, 1);
+
+    let start_time = Local::now().timestamp_millis();
+    let times = 1000_000;
+    for _ in 0..times {
+        id_worker.next_id();
+        //        let id = id_worker.next_id();
+        //        println!("{}", id);
+    }
+    println!(
+        "生成{}次ID,耗时（ms）{}",
+        times,
+        Local::now().timestamp_millis() - start_time
+    );
 }
