@@ -1,12 +1,12 @@
 #![allow(dead_code)]
+#![allow(unused)]
 #[macro_use]
 extern crate lazy_static;
-extern crate chrono;
-extern crate crypto;
 
 mod datetime;
 mod random;
 mod secret;
+mod serializing;
 mod snowflake;
 mod validators;
 
