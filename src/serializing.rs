@@ -54,3 +54,25 @@ fn ser_de_demo() {
         }
     }
 }
+#[derive(Serialize, Deserialize, Debug)]
+struct AdministrativeDivisions {
+    code: String,
+    name: String,
+}
+use std::fs::File;
+use std::io::BufReader;
+#[test]
+fn json_file() {
+    match File::open("provinces.json") {
+        Ok(f) => {
+            println!("open provinces.json...");
+            let reader = BufReader::new(f);
+            let v: Vec<AdministrativeDivisions> = serde_json::from_reader(reader).unwrap();
+
+            for ad in v {
+                println!("{:?}={:?}", ad.code, ad.name);
+            }
+        }
+        Err(e) => panic!("can't open this file : {}", e),
+    }
+}

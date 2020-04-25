@@ -80,34 +80,36 @@ mod tests {
         }
     }
 
-    use rand::prelude::*;
-    use regex::Regex;
-
+    /// 遍历并修改Vec
     #[test]
-    fn regex_demo() {
-        let re = Regex::new(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})").unwrap();
-        let before = "2012-03-14, 2013-01-01 and 2014-07-05";
-        let after = re.replace_all(before, "$m/$d/$y");
-        assert_eq!(after, "03/14/2012, 01/01/2013 and 07/05/2014");
+    fn for_iterator() {
+        let mut names = vec!["Bob", "Frank", "Ferris"];
 
-        let re = Regex::new(r"(?i)Δ+").unwrap();
-        let mat = re.find("ΔδΔ").unwrap();
-        assert_eq!((mat.start(), mat.end()), (0, 6));
-    }
-
-    #[test]
-    fn rand_demo() {
-        if rand::random() {
-            println!("char: {}", rand::random::<char>());
+        for name in names.iter_mut() {
+            *name = match name {
+                &mut "Ferris" => "There is a rustacean among us!",
+                _ => "Hello",
+            }
         }
-
-        let mut rng = rand::thread_rng();
-        let y: f64 = rng.gen();
-        println!("{}", y);
-        let mut nums: Vec<i32> = (1..100).collect();
-        nums.shuffle(&mut rng);
-
-        println!("{:?}", nums)
+        println!("names: {:?}", names);
     }
 
+    use std::fs::File;
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
+    /// 逐行读取文件
+    #[test]
+    fn read_file_lines() {
+        match File::open("why-rust.txt") {
+            Ok(f) => {
+                let reader = BufReader::new(f);
+                let lines = reader.lines();
+                for line in lines.map(|x| x.unwrap()) {
+                    println!("{}", line);
+                }
+            }
+            Err(e) => panic!("can't open this file :{}", e),
+        }
+    }
 }

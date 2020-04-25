@@ -19,7 +19,11 @@ lazy_static! {
     };
     // 公司名称需要排除的字符串，不包含中英文括号
     static ref REGEX_NOT_COMPANY_NAME: Regex = Regex::new(r###"[`~!@#$%^&*+=|{}':;',\\.<>《》/?~！@#￥%……&*——+|{}\[\]【】‘；："”“’。，、？]"###).unwrap();
+    // 金钱（千分位）
+    static ref MONEY_REGEX: Regex = Regex::new(r"^(-)?\d{1,3}(,\d{3})*(.\d+)?$").unwrap();
 }
+
+/// 18位身份证号校验
 pub fn is_18_id_card(id_card_no: &str) -> bool {
     if !REGEX_18_ID_CARD_NO.is_match(id_card_no) {
         println!("{} isn't match regex", id_card_no);
@@ -93,59 +97,102 @@ pub fn filter_company_name(company_name: &str) -> String {
     filtered.to_string()
 }
 
-#[test]
-fn id_cards_test() {
-    let idcards = vec![
-        "142431199001145",
-        "452726199205040216",
-        "33072619901128272X",
-        "330726199011282728",
-        "210402196506064118",
-        "511621199405120323",
-        "350629196510284019",
-        "320311770706001",
-        "320311770706002",
-        "411347200105170016",
-        "220181200209086919",
-        "370104194310250136",
-        "452726199205040216",
-        "810000199408230021",
-    ];
-
-    for id in &idcards {
-        println!("{} is valid : {}", id, is_18_id_card(id));
+pub fn is_money(number: &str) -> bool {
+    let mut is_money_number = false;
+    if MONEY_REGEX.is_match(number) {
+        is_money_number = true;
     }
+
+    is_money_number
 }
 
-#[test]
-fn identifiers_test() {
-    let identifiers = vec![
-        "",
-        "   ",
-        "91512081MA62K0260E",
-        "91370200163562681G",
-        "9137V2O0163562681G",
-        "123456789012345678",
-        "91330106MA2B27HM90",
-        "91110108585852240Q",
-        "31430000MD0217741Q",
-        "410302600144140",
-        "92510107MA62M3M24U",
-        "9114021105885245XE",
-        "91330109MA27WFB10H",
-        "92320303MA1NGJ535N",
-        "92320303MA1NG535N",
-        "92420502MA4AF3986P",
-        "91420502MA4AF3986P",
-        "92370902MA3QTFEQXN",
-        "92130827MA0E9FUBOY",
-    ];
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    for id in &identifiers {
-        println!(
-            "{} is valid :{}",
-            id,
-            is_unified_social_credit_identifier(id)
-        );
+    #[test]
+    fn id_cards_test() {
+        let idcards = vec![
+            "142431199001145",
+            "452726199205040216",
+            "33072619901128272X",
+            "330726199011282728",
+            "210402196506064118",
+            "511621199405120323",
+            "350629196510284019",
+            "320311770706001",
+            "320311770706002",
+            "411347200105170016",
+            "220181200209086919",
+            "370104194310250136",
+            "452726199205040216",
+            "810000199408230021",
+        ];
+
+        for id in &idcards {
+            println!("{} is valid : {}", id, is_18_id_card(id));
+        }
+    }
+
+    #[test]
+    fn identifiers_test() {
+        let identifiers = vec![
+            "",
+            "   ",
+            "91512081MA62K0260E",
+            "91370200163562681G",
+            "9137V2O0163562681G",
+            "123456789012345678",
+            "91330106MA2B27HM90",
+            "91110108585852240Q",
+            "31430000MD0217741Q",
+            "410302600144140",
+            "92510107MA62M3M24U",
+            "9114021105885245XE",
+            "91330109MA27WFB10H",
+            "92320303MA1NGJ535N",
+            "92320303MA1NG535N",
+            "92420502MA4AF3986P",
+            "91420502MA4AF3986P",
+            "92370902MA3QTFEQXN",
+            "92130827MA0E9FUBOY",
+        ];
+
+        for id in &identifiers {
+            println!(
+                "{} is valid :{}",
+                id,
+                is_unified_social_credit_identifier(id)
+            );
+        }
+    }
+
+    #[test]
+    fn money_test() {
+        let numbers = vec![
+            "134,004,000.25",
+            "100",
+            "10",
+            "10.25",
+            "1,234",
+            "12345",
+            "abc",
+        ];
+        for number in numbers {
+            let b = is_money(number);
+            println!("{} is money : {}", number, b);
+        }
+    }
+
+    #[test]
+    fn regex_demo() {
+        let re = Regex::new(r"(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})").unwrap();
+        let before = "2012-03-14, 2013-01-01 and 2014-07-05";
+        let after = re.replace_all(before, "$m/$d/$y");
+        assert_eq!(after, "03/14/2012, 01/01/2013 and 07/05/2014");
+
+        let re = Regex::new(r"(?i)Δ+").unwrap();
+        let mat = re.find("ΔδΔ").unwrap();
+        assert_eq!((mat.start(), mat.end()), (0, 6));
     }
 }
