@@ -1,3 +1,5 @@
+extern crate image;
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -111,5 +113,29 @@ mod tests {
             }
             Err(e) => panic!("can't open this file :{}", e),
         }
+    }
+
+    use qrcode::render::svg;
+    use qrcode::{EcLevel, QrCode, Version};
+    //    use qrcode::render::Pixel;
+    //    use image::Luma;
+    #[test]
+    fn qrcode_image() {
+        let code = QrCode::new(b"Hello").unwrap();
+        let string = code
+            .render::<char>()
+            .quiet_zone(false)
+            .module_dimensions(2, 1)
+            .build();
+        println!("{}", string);
+
+        let code = QrCode::with_version(b"01234567", Version::Micro(2), EcLevel::L).unwrap();
+        let image = code
+            .render()
+            .min_dimensions(200, 200)
+            .dark_color(svg::Color("#800000"))
+            .light_color(svg::Color("#ffff80"))
+            .build();
+        println!("{}", image);
     }
 }

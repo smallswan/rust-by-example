@@ -76,3 +76,20 @@ fn json_file() {
         Err(e) => panic!("can't open this file : {}", e),
     }
 }
+
+#[macro_use]
+use serde_json::json;
+
+#[test]
+fn marco_json_demo() {
+    let code = 200;
+    let features = vec!["serde", "json"];
+
+    let value = json!({
+    "code": code,
+    "success": code == 200,
+    "payload": {
+        features[0]: features[1]
+    }});
+    println!("{:?},{:?}", value["success"], value["no_exist"]);
+}
