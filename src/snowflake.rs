@@ -1,7 +1,7 @@
 extern crate chrono;
 use chrono::prelude::*;
 
-const TWEPOCH: i64 = 1577836800000i64; //2020-01-01 UTC
+const TWEPOCH: i64 = 1_577_836_800_000_i64; //2020-01-01 UTC
 const WORKER_ID_BITS: i64 = 5i64;
 const DATA_CENTER_ID_BITS: i64 = 5i64;
 const MAX_WORKER_ID: i64 = 31i64;
@@ -63,10 +63,10 @@ impl SnowflakeIdWorker {
 
         self.last_timestamp = timestamp;
 
-        return ((timestamp - TWEPOCH) << TIMESTAMP_LEFT_SHIFT)
+        ((timestamp - TWEPOCH) << TIMESTAMP_LEFT_SHIFT)
             | (self.data_center_id << DATACENTER_ID_SHIFT)
             | (self.worker_id << WORKER_ID_SHIFT)
-            | self.sequence;
+            | self.sequence
     }
 }
 

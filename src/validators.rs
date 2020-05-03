@@ -10,8 +10,8 @@ lazy_static! {
         let verify_code = "0123456789ABCDEFGHJKLMNPQRTUWXY";
         let verify_code_vec :Vec<char> = verify_code.chars().collect();
         let mut verify_code_map = HashMap::new();
-        for i in 0..verify_code.len(){
-            verify_code_map.insert(verify_code_vec[i],i);
+        for (i,item) in verify_code_vec.iter().enumerate().take(verify_code.len()){
+            verify_code_map.insert(*item,i);
 
         }
         println!("{:?}",verify_code_map);
@@ -74,7 +74,7 @@ pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
     for i in 0..17 {
         let ch = identifier_chars[i];
         if let Some(index) = VERIFY_CODE_MAP.get(&ch) {
-            sum = sum + index * WEIGHT[i];
+            sum += index * WEIGHT[i];
         }
     }
 
@@ -98,12 +98,7 @@ pub fn filter_company_name(company_name: &str) -> String {
 }
 
 pub fn is_money(number: &str) -> bool {
-    let mut is_money_number = false;
-    if MONEY_REGEX.is_match(number) {
-        is_money_number = true;
-    }
-
-    is_money_number
+    MONEY_REGEX.is_match(number)
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@ mod serializing;
 mod snowflake;
 mod validators;
 
-const TO_SEARCH: &'static str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
+const TO_SEARCH: &str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
 use std::mem;
 use List::*;
@@ -49,19 +49,18 @@ impl List {
     fn stringify(&self) -> String {
         match *self {
             Cons(head, ref tail) => format!("{},{}", head, tail.stringify()),
-            Nil => format!("Nil"),
+            Nil => "Nil".to_string(),
         }
     }
 }
 
 fn interest_rate(capital: f64, rate: f64, period: f64) -> f64 {
-    let total = capital * (1.0 + rate).powf(period);
-    total
+    capital * (1.0 + rate).powf(period)
 }
 /// 等比数列求和
 fn geometric_series_sum(a1: f64, q: f64, n: u32) -> f64 {
     match q {
-        x if x == 1.0 => (n as f64) * a1,
+        x if (x - 1.0).abs() == 0.0 => (n as f64) * a1,
         _ => a1 * (1.0 - q.powf(n as f64)) / (1.0 - q),
     }
 }

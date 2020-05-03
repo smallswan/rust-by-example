@@ -1,7 +1,6 @@
 use rustc_serialize::base64::{FromBase64, ToBase64, STANDARD};
 use rustc_serialize::hex::ToHex;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::str;
 
 #[derive(Serialize, Deserialize, Debug)]
