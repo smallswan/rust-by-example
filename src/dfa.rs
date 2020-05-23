@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -21,19 +21,28 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars) {
             is_end: '0',
             word_map: Some(HashMap::<char, Box<SensitiveWordMap>>::new()),
         };
-
         if let Some(now_map) = map.word_map.as_mut() {
-            now_map.insert(ch, Box::new(swm));
+            let contains_key = now_map.contains_key(&ch);
+            println!("ch:{},contains_key:{:?}",ch,contains_key);
 
-            if let Some(m) = now_map.get_mut(&ch) {
-                r_map(&mut *m, &mut *chars);
+            if contains_key{
+                if let Some(m) = now_map.get_mut(&ch) {
+                    r_map(&mut *m, &mut *chars);
+                }
+            }else{
+                now_map.insert(ch, Box::new(swm));
+                if let Some(m) = now_map.get_mut(&ch) {
+                    r_map(&mut *m, &mut *chars);
+                }
             }
+
+
         }
     }
     println!("{:?}", map);
 }
 
-fn build_sensitive_word_map(set: HashSet<String>) {
+fn build_sensitive_word_map(set: BTreeSet<String>) {
     let mut sensitive_word_map = HashMap::<char, SensitiveWordMap>::new();
 
     let mut iterator = set.iter();
@@ -44,11 +53,13 @@ fn build_sensitive_word_map(set: HashSet<String>) {
 
         //读取每行的首个字符
         if let Some(first_char) = key_chars.next() {
-            if let Some(swm) = sensitive_word_map.get_mut(&first_char) {
+            if let Some(word_map) = sensitive_word_map.get_mut(&first_char) {
+                println!("first_char1：{}",first_char);
                 //读取下一个字符
-                r_map(&mut *swm, &mut key_chars);
-
+                r_map(&mut *word_map, &mut key_chars);
+            //
             } else {
+                println!("first_char2：{}",first_char);
                 let mut is_end = '0';
                 if i == len - 1 {
                     is_end = '1';
@@ -66,14 +77,16 @@ fn build_sensitive_word_map(set: HashSet<String>) {
                 }
             }
         }
+        println!("sensitive_word_map-----{:?}", sensitive_word_map);
     }
 
-    println!("sensitive_word_map-----{:?}", sensitive_word_map);
+    println!("last sensitive_word_map-----{:?}", sensitive_word_map);
+
 }
 
 /// 读取敏感词库中的内容，将内容添加到set集合中
-fn read_sensitive_word_file() -> HashSet<String> {
-    let mut set = HashSet::<String>::new();
+fn read_sensitive_word_file() -> BTreeSet<String> {
+    let mut set = BTreeSet::<String>::new();
     match File::open("sensitive-words.txt") {
         Ok(f) => {
             let reader = BufReader::new(f);
