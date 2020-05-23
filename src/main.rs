@@ -4,6 +4,7 @@
 extern crate lazy_static;
 
 mod datetime;
+mod dfa;
 mod random;
 mod secret;
 mod serializing;
@@ -12,6 +13,7 @@ mod validators;
 
 const TO_SEARCH: &str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
+use std::collections::HashMap;
 use std::mem;
 use List::*;
 
@@ -122,4 +124,23 @@ fn main() {
     datetime::formatting_and_parsing();
 
     random::rand_demo();
+
+    let len = String::from("Здравствуйте").len();
+
+    println!("len:{}", len);
+
+    for b in "नमसते".bytes() {
+        println!("{}", b);
+    }
+
+    let mut hello = "नमसते你好".chars();
+    while let Some(ch) = hello.next() {
+        println!("{}", ch);
+    }
+
+    let teams = vec![String::from("Blue"), String::from("Yellow")];
+    let initial_scores = vec![10, 50];
+    let scores: HashMap<_, _> = teams.iter().zip(initial_scores.iter()).collect();
+
+    println!("{:?}", scores);
 }
