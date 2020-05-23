@@ -16,11 +16,6 @@ struct SensitiveWordMap {
 /// 递归地修改map
 fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars) {
     if let Some(ch) = chars.next() {
-        let mut swm = SensitiveWordMap {
-            word: ch,
-            is_end: '0',
-            word_map: Some(HashMap::<char, Box<SensitiveWordMap>>::new()),
-        };
         if let Some(now_map) = map.word_map.as_mut() {
             let contains_key = now_map.contains_key(&ch);
             println!("ch:{},contains_key:{:?}", ch, contains_key);
@@ -30,6 +25,11 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars) {
                     r_map(&mut *m, &mut *chars);
                 }
             } else {
+                let mut swm = SensitiveWordMap {
+                    word: ch,
+                    is_end: '0',
+                    word_map: Some(HashMap::<char, Box<SensitiveWordMap>>::new()),
+                };
                 now_map.insert(ch, Box::new(swm));
                 if let Some(m) = now_map.get_mut(&ch) {
                     r_map(&mut *m, &mut *chars);
@@ -46,7 +46,7 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
     let mut sensitive_word_map = HashMap::<char, SensitiveWordMap>::new();
 
     let mut iterator = set.iter();
-    while let Some(key) = iterator.next() {
+    for key in iterator {
         let len = key.chars().count();
         let mut key_chars = key.chars();
         //读取每行的首个字符
@@ -73,7 +73,7 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
         println!("sensitive_word_map-----{:?}", sensitive_word_map);
     }
 
-    return sensitive_word_map;
+    sensitive_word_map
 }
 
 /// 读取敏感词库中的内容，将内容添加到set集合中

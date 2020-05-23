@@ -134,7 +134,7 @@ fn main() {
     }
 
     let mut hello = "नमसते你好".chars();
-    while let Some(ch) = hello.next() {
+    for ch in hello {
         println!("{}", ch);
     }
 
