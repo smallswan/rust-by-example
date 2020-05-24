@@ -143,4 +143,6 @@ fn main() {
     let scores: HashMap<_, _> = teams.iter().zip(initial_scores.iter()).collect();
 
     println!("{:?}", scores);
+
+//    dfa::check_sensitive_word(String::from("信用卡代还"),0,0);
 }
