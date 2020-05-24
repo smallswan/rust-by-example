@@ -144,5 +144,5 @@ fn main() {
 
     println!("{:?}", scores);
 
-//    dfa::check_sensitive_word(String::from("信用卡代还"),0,0);
+    //    dfa::check_sensitive_word(String::from("信用卡代还"),0,0);
 }
