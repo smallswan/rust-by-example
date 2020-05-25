@@ -26,13 +26,13 @@ struct SensitiveWordMap {
 }
 ///
 ///
-fn find_sensitive_word(txt: String, match_type: u32) -> BTreeSet<String> {
+fn find_sensitive_word(txt: String, match_type: &MatchType) -> BTreeSet<String> {
     let mut sensitive_word_set = BTreeSet::<String>::new();
     let len = txt.chars().count();
     let txt_vec: Vec<char> = txt.chars().collect();
     let mut i = 0;
     while i < len {
-        let length = check_sensitive_word(&txt, i, MatchType::MaxMatchType);
+        let length = check_sensitive_word(&txt, i, match_type);
         if length > 0 {
             //存在,加入list中
             println!("i:{},length:{}", i, length);
@@ -47,7 +47,7 @@ fn find_sensitive_word(txt: String, match_type: u32) -> BTreeSet<String> {
 
 /// 查文字中是否包含检敏感字符,如果存在，则返回敏感词字符的长度，不存在返回0
 ///
-fn check_sensitive_word(txt: &str, begin_index: usize, match_type: MatchType) -> usize {
+fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -> usize {
     let mut match_flag = 0;
     let mut last_match_length = 0;
     let mut word: char;
@@ -58,7 +58,16 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: MatchType) ->
             if let Some(swm) = SENSITIVE_WORD_MAP.get(&word) {
                 println!("i:{},check_sensitive_word {:?}",i, *swm);
                 match_flag += 1;
-                last_match_length = match_flag;
+                if (*swm).is_end == '1'{
+                    println!("*swm.is_end:{}",(*swm).is_end);
+                    last_match_length = match_flag;
+
+                    match  match_type {
+                        MatchType::MinMatchType => break,
+                        MatchType::MaxMatchType => (),
+                    }
+                }
+
                 //递归查找
                 recursive_find_map(
                     swm,
@@ -72,8 +81,8 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: MatchType) ->
             }
         }
     }
-    match_flag
-    //    last_match_length
+//    match_flag
+        last_match_length
 }
 /// 递归查找map
 ///
@@ -92,12 +101,24 @@ fn recursive_find_map(
                 if let Some(next_swm) = wm.get(word) {
                     *match_flag += 1;
 
-                    if let Some(nwm) = &next_swm.word_map {}
+                    println!("*match_flag:{}",*match_flag);
 
                     println!(
                         "swm.word:{},swm.is_end:{},swm.word_map:{:?}",
                         swm.word, swm.is_end, swm.word_map
                     );
+
+                    if let Some(nwm) = &next_swm.word_map {
+                        println!(
+                            "nwm:{:?}",
+                            nwm
+                        );
+                        if nwm.is_empty(){
+                            return;
+                        }
+
+                    }
+
                     if swm.is_end == '1' {
                         println!("is_end:{}", 1);
                         *last_match_length = *match_flag;
@@ -218,6 +239,21 @@ fn read_file() {
 
     //    println!("last_match_length:{}",last_match_length);
 
-    let set = find_sensitive_word(String::from("信用卡套"), 0);
+    let set = find_sensitive_word(String::from("信用卡套现"), &MatchType::MaxMatchType);
     println!("{:?}", set);
+}
+
+#[test]
+fn sub_str(){
+    //实现类似Java String.substring()的功能，注意并不是适用于所有的字符。
+    let str = String::from("hello world");
+    let char_vec:Vec<char> = str.chars().collect();
+    let sub_str:String = char_vec[0..5].iter().collect();
+    println!("sub_str:{}",sub_str);
+
+    //不能使用上述代码进行截取子字符串的字符
+    for c in "नमस्ते".chars() {
+        println!("{}", c);
+    }
+
 }
