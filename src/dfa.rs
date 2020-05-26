@@ -6,16 +6,19 @@ use std::io::BufReader;
 
 use std::str::Chars;
 
+/// 敏感词检测DFA算法（Rust实现，参考Java版实现 https://www.cnblogs.com/shihaiming/p/7048379.html）
+/// 由于语言方面的限制，具体实现与Java有一定的差异。
+///
 lazy_static! {
     static ref SENSITIVE_WORD_MAP: HashMap<char, SensitiveWordMap> = {
         let set = read_sensitive_word_file();
-        return build_sensitive_word_map(set);
+        build_sensitive_word_map(set)
     };
 }
 
-enum MatchType {
-    MinMatchType,
-    MaxMatchType,
+pub enum MatchType {
+    MinMatchType, //最小匹配规则
+    MaxMatchType, //最大匹配规则
 }
 
 #[derive(Debug)]
@@ -24,9 +27,10 @@ struct SensitiveWordMap {
     is_end: char,
     word_map: Option<HashMap<char, Box<SensitiveWordMap>>>,
 }
+
+/// 获取文字中的敏感词
 ///
-///
-fn find_sensitive_word(txt: String, match_type: &MatchType) -> BTreeSet<String> {
+pub fn find_sensitive_word(txt: &str, match_type: &MatchType) -> BTreeSet<String> {
     let mut sensitive_word_set = BTreeSet::<String>::new();
     let len = txt.chars().count();
     let txt_vec: Vec<char> = txt.chars().collect();
@@ -35,9 +39,9 @@ fn find_sensitive_word(txt: String, match_type: &MatchType) -> BTreeSet<String> 
         let length = check_sensitive_word(&txt, i, match_type);
         if length > 0 {
             //存在,加入list中
-            println!("i:{},length:{}", i, length);
+            println!("i:{},match length:{}", i, length);
             sensitive_word_set.insert(txt_vec[i..i + length].iter().collect());
-            i = i + length - 1; //减1的原因，是因为for会自增
+            i = i + length - 1; //减1的原因，是因为循环会自增
         }
         i += 1;
     }
@@ -84,12 +88,12 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
 ///
 fn recursive_find_map(
     swm: &SensitiveWordMap,
-    txt_vec: &Vec<char>,
+    txt_vec: &[char],
     i: &mut usize,
     match_flag: &mut usize,
     last_match_length: &mut usize,
 ) {
-    if *i <= txt_vec.len() {
+    if *i < txt_vec.len() {
         if let Some(word) = txt_vec.get(*i) {
             if let Some(wm) = &swm.word_map {
                 if let Some(next_swm) = wm.get(word) {
@@ -110,7 +114,7 @@ fn recursive_find_map(
                         *last_match_length = *match_flag;
                         return;
                     }
-                    *i = *i + 1;
+                    *i += 1;
                     recursive_find_map(&next_swm, txt_vec, i, match_flag, last_match_length);
                 } else {
                     println!("not found word :{}", word);
@@ -122,7 +126,7 @@ fn recursive_find_map(
     }
 }
 /// 递归地修改map
-fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
+fn recursive_build_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
     if let Some(ch) = chars.next() {
         *count -= 1;
         if let Some(now_map) = map.word_map.as_mut() {
@@ -130,13 +134,10 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
 
             if contains_key {
                 if let Some(m) = now_map.get_mut(&ch) {
-                    r_map(&mut *m, &mut *chars, count);
+                    recursive_build_map(&mut *m, &mut *chars, count);
                 }
             } else {
-                let mut is_end = '0';
-                if *count == 0 {
-                    is_end = '1';
-                }
+                let mut is_end = if *count == 0 { '1' } else { '0' };
                 let mut swm = SensitiveWordMap {
                     word: ch,
                     is_end,
@@ -144,14 +145,60 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
                 };
                 now_map.insert(ch, Box::new(swm));
                 if let Some(m) = now_map.get_mut(&ch) {
-                    r_map(&mut *m, &mut *chars, count);
+                    recursive_build_map(&mut *m, &mut *chars, count);
                 }
             }
         }
     }
 }
 
-/// 读取敏感词库，将敏感词放入HashSet中，构建一个DFA算法模型
+/// 读取敏感词库，将敏感词放入HashMap中，构建一个DFA算法模型
+///  {
+///   '信': SensitiveWordMap {
+///       word: '信',
+///       is_end: '0',
+///       word_map: Some({
+///           '用': SensitiveWordMap {
+///               word: '用',
+///               is_end: '0',
+///               word_map: Some({
+///                   '卡': SensitiveWordMap {
+///                       word: '卡',
+///                       is_end: '0',
+///                       word_map: Some({
+///                           '套': SensitiveWordMap {
+///                               word: '套',
+///                               is_end: '0',
+///                               word_map: Some({
+///                                   '现': SensitiveWordMap {
+///                                       word: '现',
+///                                       is_end: '1',
+///                                       word_map: Som e({})
+///                                   }
+///                               })
+///                           },
+///                           '代': SensitiveWordMap {
+///                               word: '代',
+///                               is_end: '0',
+///                               word_map: Some({
+///                                   '付': SensitiveWordMap {
+///                                       word: '付',
+///                                       is_end: '1',
+///                                       word_map: Some({})
+///                                   },
+///                                   '还': SensitiveWordMap {
+///                                       word: '还',
+///                                       is_end: '1',
+///                                       word_map: Some({})
+///                                   }
+///                               })
+///                           }
+///                       })
+///                   }
+///               })
+///           }
+///       })
+///   }
 ///
 fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWordMap> {
     let mut sensitive_word_map = HashMap::<char, SensitiveWordMap>::new();
@@ -166,12 +213,9 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
             count -= 1;
             if let Some(word_map) = sensitive_word_map.get_mut(&first_char) {
                 //读取下一个字符
-                r_map(&mut *word_map, &mut key_chars, &mut count);
+                recursive_build_map(&mut *word_map, &mut key_chars, &mut count);
             } else {
-                let mut is_end = '0';
-                if len == 1 {
-                    is_end = '1';
-                }
+                let mut is_end = if len == 1 { '1' } else { '0' };
 
                 let mut now_map = SensitiveWordMap {
                     word: first_char,
@@ -181,7 +225,7 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
                 sensitive_word_map.insert(first_char, now_map);
 
                 if let Some(now_map) = sensitive_word_map.get_mut(&first_char) {
-                    r_map(&mut *now_map, &mut key_chars, &mut count);
+                    recursive_build_map(&mut *now_map, &mut key_chars, &mut count);
                 }
             }
         }
@@ -211,19 +255,16 @@ fn read_sensitive_word_file() -> BTreeSet<String> {
 
 #[test]
 fn read_file() {
-    //    let set = read_sensitive_word_file();
-    //    let sensitive_word_map = build_sensitive_word_map(set);
-    //    println!("last sensitive_word_map-----{:?}", sensitive_word_map);
-
-    //    let last_match_length = check_sensitive_word("信用卡代还", 0, MatchType::MaxMatchType);
-
-    //    println!("last_match_length:{}",last_match_length);
-
-    let set = find_sensitive_word(
-        String::from("花呗信用卡代还OK套现"),
-        &MatchType::MaxMatchType,
-    );
-    println!("{:?}", set);
+    let str_vec = vec![
+        "花呗信用卡代还OK套现",
+        "套花呗分期代付",
+        "马上套现信用卡",
+        "期货套利",
+    ];
+    for str in str_vec {
+        let set = find_sensitive_word(str, &MatchType::MaxMatchType);
+        println!("{} --> {:?}", str, set);
+    }
 }
 
 #[test]
