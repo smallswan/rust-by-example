@@ -53,35 +53,32 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
     let mut word: char;
     let txt_vec: Vec<char> = txt.chars().collect();
     let len = txt.len();
-    //for i in begin_index..len {
-        if let Some(word) = &txt_vec.get(begin_index) {
-            if let Some(swm) = SENSITIVE_WORD_MAP.get(&word) {
-                //println!("i:{},check_sensitive_word {:?}",i, *swm);
-                match_flag += 1;
-                if (*swm).is_end == '1'{
-                    println!("*swm.is_end:{}",(*swm).is_end);
-                    last_match_length = match_flag;
+    if let Some(word) = &txt_vec.get(begin_index) {
+        if let Some(swm) = SENSITIVE_WORD_MAP.get(&word) {
+            match_flag += 1;
+            if (*swm).is_end == '1' {
+                last_match_length = match_flag;
 
-                    match  match_type {
-                        MatchType::MinMatchType => {return last_match_length;},
-                        MatchType::MaxMatchType => (),
+                match match_type {
+                    MatchType::MinMatchType => {
+                        return last_match_length;
                     }
+                    MatchType::MaxMatchType => (),
                 }
+            }
 
-                //递归查找
-                let mut j = begin_index + 1;
-                recursive_find_map(
-                    swm,
-                    &txt_vec,
-                    &mut j,
-                    &mut match_flag,
-                    &mut last_match_length,
-                );
-            } 
+            //递归查找
+            let mut j = begin_index + 1;
+            recursive_find_map(
+                swm,
+                &txt_vec,
+                &mut j,
+                &mut match_flag,
+                &mut last_match_length,
+            );
         }
-    //}
-//    match_flag
-        last_match_length
+    }
+    last_match_length
 }
 /// 递归查找map
 ///
@@ -93,43 +90,23 @@ fn recursive_find_map(
     last_match_length: &mut usize,
 ) {
     if *i <= txt_vec.len() {
-        //println!("i:{},word", i);
         if let Some(word) = txt_vec.get(*i) {
-            println!("i:{},word:{}", *i, word);
             if let Some(wm) = &swm.word_map {
                 if let Some(next_swm) = wm.get(word) {
                     *match_flag += 1;
 
-                    println!("*match_flag:{},*last_match_length:{}",*match_flag,*last_match_length);
-
-                    println!(
-                        "swm.word:{},swm.is_end:{},swm.word_map:{:?}",
-                        swm.word, swm.is_end, swm.word_map
-                    );
-                    println!(
-                        "next_swm:{:?}",
-                        next_swm
-                    );
-
                     if let Some(nwm) = &next_swm.word_map {
-                        println!(
-                            "nwm:{:?}",
-                            nwm
-                        );
-                        if nwm.is_empty(){
+                        if nwm.is_empty() {
                             *last_match_length = *match_flag;
                             return;
                         }
-                        println!("next_swm.is_end:{}",next_swm.is_end);
-                        if next_swm.is_end == '1'{
-                        *last_match_length = *match_flag;
-                        return;
-                       }
-
+                        if next_swm.is_end == '1' {
+                            *last_match_length = *match_flag;
+                            return;
+                        }
                     }
 
                     if swm.is_end == '1' {
-                        println!("is_end 2:{}", 1);
                         *last_match_length = *match_flag;
                         return;
                     }
@@ -150,15 +127,12 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
         *count -= 1;
         if let Some(now_map) = map.word_map.as_mut() {
             let contains_key = now_map.contains_key(&ch);
-            //            println!("ch:{},contains_key:{:?}", ch, contains_key);
 
             if contains_key {
                 if let Some(m) = now_map.get_mut(&ch) {
                     r_map(&mut *m, &mut *chars, count);
                 }
             } else {
-                //                let count = chars.count();
-                //                println!("count:{}",count);
                 let mut is_end = '0';
                 if *count == 0 {
                     is_end = '1';
@@ -175,7 +149,6 @@ fn r_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mut usize) {
             }
         }
     }
-    //    println!("{:?}", map);
 }
 
 /// 读取敏感词库，将敏感词放入HashSet中，构建一个DFA算法模型
@@ -192,11 +165,9 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
         if let Some(first_char) = key_chars.next() {
             count -= 1;
             if let Some(word_map) = sensitive_word_map.get_mut(&first_char) {
-                //                println!("first_char1：{}", first_char);
                 //读取下一个字符
                 r_map(&mut *word_map, &mut key_chars, &mut count);
             } else {
-                //                println!("first_char2：{}", first_char);
                 let mut is_end = '0';
                 if len == 1 {
                     is_end = '1';
@@ -214,7 +185,6 @@ fn build_sensitive_word_map(set: BTreeSet<String>) -> HashMap<char, SensitiveWor
                 }
             }
         }
-        //        println!("sensitive_word_map-----{:?}", sensitive_word_map);
     }
 
     sensitive_word_map
@@ -249,21 +219,23 @@ fn read_file() {
 
     //    println!("last_match_length:{}",last_match_length);
 
-    let set = find_sensitive_word(String::from("信用卡代还OK套现"), &MatchType::MaxMatchType);
+    let set = find_sensitive_word(
+        String::from("花呗信用卡代还OK套现"),
+        &MatchType::MaxMatchType,
+    );
     println!("{:?}", set);
 }
 
 #[test]
-fn sub_str(){
+fn sub_str() {
     //实现类似Java String.substring()的功能，注意并不是适用于所有的字符。
     let str = String::from("hello world");
-    let char_vec:Vec<char> = str.chars().collect();
-    let sub_str:String = char_vec[0..5].iter().collect();
-    println!("sub_str:{}",sub_str);
+    let char_vec: Vec<char> = str.chars().collect();
+    let sub_str: String = char_vec[0..5].iter().collect();
+    println!("sub_str:{}", sub_str);
 
     //不能使用上述代码进行截取子字符串的字符
     for c in "नमस्ते".chars() {
         println!("{}", c);
     }
-
 }
