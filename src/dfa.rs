@@ -53,34 +53,33 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
     let mut word: char;
     let txt_vec: Vec<char> = txt.chars().collect();
     let len = txt.len();
-    for i in begin_index..len {
-        if let Some(word) = &txt_vec.get(i) {
+    //for i in begin_index..len {
+        if let Some(word) = &txt_vec.get(begin_index) {
             if let Some(swm) = SENSITIVE_WORD_MAP.get(&word) {
-                println!("i:{},check_sensitive_word {:?}",i, *swm);
+                //println!("i:{},check_sensitive_word {:?}",i, *swm);
                 match_flag += 1;
                 if (*swm).is_end == '1'{
                     println!("*swm.is_end:{}",(*swm).is_end);
                     last_match_length = match_flag;
 
                     match  match_type {
-                        MatchType::MinMatchType => break,
+                        MatchType::MinMatchType => {return last_match_length;},
                         MatchType::MaxMatchType => (),
                     }
                 }
 
                 //递归查找
+                let mut j = begin_index + 1;
                 recursive_find_map(
                     swm,
                     &txt_vec,
-                    i + 1,
+                    &mut j,
                     &mut match_flag,
                     &mut last_match_length,
                 );
-            } else {
-                break;
-            }
+            } 
         }
-    }
+    //}
 //    match_flag
         last_match_length
 }
@@ -89,23 +88,27 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
 fn recursive_find_map(
     swm: &SensitiveWordMap,
     txt_vec: &Vec<char>,
-    i: usize,
+    i: &mut usize,
     match_flag: &mut usize,
     last_match_length: &mut usize,
 ) {
-    if i <= txt_vec.len() {
-        println!("i:{},word", i);
-        if let Some(word) = txt_vec.get(i) {
-            println!("i:{},word:{}", i, word);
+    if *i <= txt_vec.len() {
+        //println!("i:{},word", i);
+        if let Some(word) = txt_vec.get(*i) {
+            println!("i:{},word:{}", *i, word);
             if let Some(wm) = &swm.word_map {
                 if let Some(next_swm) = wm.get(word) {
                     *match_flag += 1;
 
-                    println!("*match_flag:{}",*match_flag);
+                    println!("*match_flag:{},*last_match_length:{}",*match_flag,*last_match_length);
 
                     println!(
                         "swm.word:{},swm.is_end:{},swm.word_map:{:?}",
                         swm.word, swm.is_end, swm.word_map
+                    );
+                    println!(
+                        "next_swm:{:?}",
+                        next_swm
                     );
 
                     if let Some(nwm) = &next_swm.word_map {
@@ -114,17 +117,24 @@ fn recursive_find_map(
                             nwm
                         );
                         if nwm.is_empty(){
+                            *last_match_length = *match_flag;
                             return;
                         }
+                        println!("next_swm.is_end:{}",next_swm.is_end);
+                        if next_swm.is_end == '1'{
+                        *last_match_length = *match_flag;
+                        return;
+                       }
 
                     }
 
                     if swm.is_end == '1' {
-                        println!("is_end:{}", 1);
+                        println!("is_end 2:{}", 1);
                         *last_match_length = *match_flag;
                         return;
                     }
-                    recursive_find_map(&next_swm, txt_vec, i + 1, match_flag, last_match_length);
+                    *i = *i + 1;
+                    recursive_find_map(&next_swm, txt_vec, i, match_flag, last_match_length);
                 } else {
                     println!("not found word :{}", word);
                 }
@@ -239,7 +249,7 @@ fn read_file() {
 
     //    println!("last_match_length:{}",last_match_length);
 
-    let set = find_sensitive_word(String::from("信用卡套现"), &MatchType::MaxMatchType);
+    let set = find_sensitive_word(String::from("信用卡代还OK套现"), &MatchType::MaxMatchType);
     println!("{:?}", set);
 }
 
