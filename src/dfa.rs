@@ -365,4 +365,5 @@ fn set_iter() {
     for val in b_tree_set {
         println!("{}", val);
     }
+    println!("using {} coding rust program is greate","VSCode");
 }
