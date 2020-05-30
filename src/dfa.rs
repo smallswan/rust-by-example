@@ -27,6 +27,34 @@ struct SensitiveWordMap {
     is_end: char,
     word_map: Option<HashMap<char, Box<SensitiveWordMap>>>,
 }
+/// 替换敏感字字符
+pub fn replace_sensitive_word(txt: &str, match_type: &MatchType, replace_char: char) -> String {
+    let set: BTreeSet<String> = find_sensitive_word(txt, match_type);
+    let mut replace_str = String::from(txt);
+    for word in set {
+        let len = word.chars().count();
+        let replace_chars: String = vec![replace_char; len].iter().collect();
+        replace_str = replace_str.replace(word.as_str(), &replace_chars);
+    }
+
+    replace_str
+}
+/// 判断文字是否包含敏感字符
+///
+pub fn is_contains_sensitive_word(txt: &str, match_type: &MatchType) -> bool {
+    let is_contains = false;
+    let len = txt.chars().count();
+    let txt_vec: Vec<char> = txt.chars().collect();
+    let mut i = 0;
+    while i < len {
+        let length = check_sensitive_word(&txt, i, match_type);
+        if length > 0 {
+            return true;
+        }
+        i += 1;
+    }
+    is_contains
+}
 
 /// 获取文字中的敏感词
 ///
@@ -39,9 +67,8 @@ pub fn find_sensitive_word(txt: &str, match_type: &MatchType) -> BTreeSet<String
         let length = check_sensitive_word(&txt, i, match_type);
         if length > 0 {
             //存在,加入list中
-            println!("i:{},match length:{}", i, length);
             sensitive_word_set.insert(txt_vec[i..i + length].iter().collect());
-            i = i + length - 1; //减1的原因，是因为循环会自增
+            i += length - 1; //减1的原因，是因为循环会自增
         }
         i += 1;
     }
@@ -79,6 +106,7 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
                 &mut j,
                 &mut match_flag,
                 &mut last_match_length,
+                match_type,
             );
         }
     }
@@ -92,35 +120,54 @@ fn recursive_find_map(
     i: &mut usize,
     match_flag: &mut usize,
     last_match_length: &mut usize,
+    match_type: &MatchType,
 ) {
-    if *i < txt_vec.len() {
-        if let Some(word) = txt_vec.get(*i) {
-            if let Some(wm) = &swm.word_map {
-                if let Some(next_swm) = wm.get(word) {
-                    *match_flag += 1;
+    if let Some(word) = txt_vec.get(*i) {
+        if let Some(wm) = &swm.word_map {
+            if let Some(next_swm) = wm.get(word) {
+                *match_flag += 1;
 
-                    if let Some(nwm) = &next_swm.word_map {
-                        if nwm.is_empty() {
-                            *last_match_length = *match_flag;
+                if swm.is_end == '1' {
+                    *last_match_length = *match_flag;
+                    match match_type {
+                        MatchType::MinMatchType => {
                             return;
                         }
-                        if next_swm.is_end == '1' {
-                            *last_match_length = *match_flag;
-                            return;
-                        }
+                        MatchType::MaxMatchType => (),
                     }
-
-                    if swm.is_end == '1' {
-                        *last_match_length = *match_flag;
-                        return;
-                    }
-                    *i += 1;
-                    recursive_find_map(&next_swm, txt_vec, i, match_flag, last_match_length);
-                } else {
-                    println!("not found word :{}", word);
                 }
-            } else {
-                println!("swm word_map is empty,word:{}", word);
+
+                if next_swm.is_end == '1' {
+                    *last_match_length = *match_flag;
+                    match match_type {
+                        MatchType::MinMatchType => {
+                            return;
+                        }
+                        MatchType::MaxMatchType => (),
+                    }
+                }
+
+                if let Some(nwm) = &next_swm.word_map {
+                    if nwm.is_empty() {
+                        *last_match_length = *match_flag;
+                        match match_type {
+                            MatchType::MinMatchType => {
+                                return;
+                            }
+                            MatchType::MaxMatchType => (),
+                        }
+                    }
+                }
+
+                *i += 1;
+                recursive_find_map(
+                    &next_swm,
+                    txt_vec,
+                    i,
+                    match_flag,
+                    last_match_length,
+                    match_type,
+                );
             }
         }
     }
@@ -260,10 +307,35 @@ fn read_file() {
         "套花呗分期代付",
         "马上套现信用卡",
         "期货套利",
+        "空手套白狼",
+        "守信用卡脖子",
+        "坚定信心,同舟共济,科学防治,精准施策",
+        "D+1还是T+1秒到结算免结算费",
     ];
-    for str in str_vec {
+
+    println!("find_sensitive_word MaxMatchType......");
+    for str in &str_vec {
         let set = find_sensitive_word(str, &MatchType::MaxMatchType);
         println!("{} --> {:?}", str, set);
+    }
+
+    println!("find_sensitive_word MinMatchType......");
+    for str in &str_vec {
+        let set = find_sensitive_word(str, &MatchType::MinMatchType);
+        println!("{} --> {:?}", str, set);
+    }
+
+    println!("is_contains_sensitive_word......");
+    for str in &str_vec {
+        let is_contains = is_contains_sensitive_word(str, &MatchType::MinMatchType);
+        println!("{} is contains sensitive words : {}", str, is_contains);
+    }
+
+    println!("replace_sensitive_word......");
+    for str in &str_vec {
+        let replace_str = replace_sensitive_word(str, &MatchType::MinMatchType, '*');
+
+        println!("{} --> {}", str, replace_str);
     }
 }
 
@@ -278,5 +350,19 @@ fn sub_str() {
     //不能使用上述代码进行截取子字符串的字符
     for c in "नमस्ते".chars() {
         println!("{}", c);
+    }
+}
+
+#[test]
+fn set_iter() {
+    let mut b_tree_set = BTreeSet::<String>::new();
+    b_tree_set.insert(String::from("A"));
+    b_tree_set.insert(String::from("B"));
+    b_tree_set.insert(String::from("C"));
+    b_tree_set.insert(String::from("D"));
+    b_tree_set.insert(String::from("E"));
+
+    for val in b_tree_set {
+        println!("{}", val);
     }
 }
