@@ -138,4 +138,77 @@ mod tests {
             .build();
         println!("{}", image);
     }
+
+    use std::ops::Deref;
+    struct MyBox<T>(T);
+    impl<T> MyBox<T> {
+        fn new(x: T) -> MyBox<T> {
+            MyBox(x)
+        }
+    }
+
+    impl<T> Deref for MyBox<T> {
+        type Target = T;
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    /// 通过 Deref trait 将智能指针当作常规引用处理 ,http://120.78.128.153/rustbook/ch15-02-deref.html
+    #[test]
+    fn demo_box() {
+        let x = 5;
+        let y = MyBox::new(x);
+        assert_eq!(5, x);
+        assert_eq!(5, *y)
+    }
+
+    struct CustomSmartPointer {
+        data: String,
+    }
+    impl Drop for CustomSmartPointer {
+        fn drop(&mut self) {
+            println!("Dropping CustomSmartPointer with data `{}`!", self.data);
+        }
+    }
+
+    use std::mem::drop;
+    /// 通过 std::mem::drop 提早丢弃值, http://120.78.128.153/rustbook/ch15-03-drop.html
+    #[test]
+    fn drop_trait_demo() {
+        let c = CustomSmartPointer {
+            data: String::from("my stuff"),
+        };
+        let d = CustomSmartPointer {
+            data: String::from("other stuff"),
+        };
+        println!("CustomSmartPointers created.");
+
+        println!("{:?},{:?}", c.data, d.data);
+        drop(c);
+    }
+
+    enum List {
+        Cons(i32, Rc<List>),
+        Nil,
+    }
+
+    use self::List::{Cons, Nil};
+    use std::rc::Rc;
+
+    /// 引用计数智能指针,  http://120.78.128.153/rustbook/ch15-04-rc.html
+    #[test]
+    fn rc_demo() {
+        let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
+        println!("count after created a ={}", Rc::strong_count(&a));
+        //Rc::clone 只会增加引用计数，这并不会花费多少时间。而不像深拷贝花费大量时间
+        let _b = Cons(3, Rc::clone(&a));
+        println!("count after created b ={}", Rc::strong_count(&a));
+        {
+            let _c = Cons(4, Rc::clone(&a));
+            println!("count after created c ={}", Rc::strong_count(&a));
+        }
+
+        println!("count after c goes out of scope = {}", Rc::strong_count(&a));
+    }
 }

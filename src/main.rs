@@ -13,10 +13,10 @@ mod validators;
 
 const TO_SEARCH: &str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
+use dfa::MatchType::*;
 use std::collections::HashMap;
 use std::mem;
 use List::*;
-use dfa::MatchType::*;
 
 enum Wealth {
     Rich,
@@ -146,5 +146,5 @@ fn main() {
     println!("{:?}", scores);
 
     let set = dfa::find_sensitive_word("信用卡套现成本较大", &MinMatchType);
-    println!("{:?}",set);
+    println!("{:?}", set);
 }
