@@ -245,7 +245,123 @@ mod tests {
             println!("the second msg :{}", msg);
         };
     }
+
+    // use super::ConsList::{Cons2,Nil2};
+    #[derive(Debug)]
+    enum ConsList {
+        Cons2(Rc<RefCell<i32>>, Rc<ConsList>),
+        Nil2,
+    }
+
+    use self::ConsList::{Cons2, Nil2};
+    #[test]
+    fn rc_rcfcell() {
+        let value = Rc::new(RefCell::new(5));
+        let a = Rc::new(Cons2(Rc::clone(&value), Rc::new(Nil2)));
+        let b = Cons2(Rc::new(RefCell::new(6)), Rc::clone(&a));
+        let c = Cons2(Rc::new(RefCell::new(10)), Rc::clone(&a));
+
+        *value.borrow_mut() += 10;
+
+        println!("a after = {:?}", a);
+        println!("b after = {:?}", b);
+        println!("c after = {:?}", c);
+    }
+
+    #[derive(Debug)]
+    enum List3 {
+        Cons3(i32, RefCell<Rc<List3>>),
+        Nil3,
+    }
+
+    impl List3 {
+        fn tail(&self) -> Option<&RefCell<Rc<List3>>> {
+            match self {
+                Cons3(_, item) => Some(item),
+                Nil3 => None,
+            }
+        }
+    }
+
+    /// 引用循环与内存泄漏 , http://120.78.128.153/rustbook/ch15-06-reference-cycles.html
+    use self::List3::{Cons3, Nil3};
+    #[test]
+    fn reference_cycles() {
+        let a = Rc::new(Cons3(5, RefCell::new(Rc::new(Nil3))));
+
+        println!("a initial rc count = {}", Rc::strong_count(&a));
+        println!("a next item = {:?}", a.tail());
+        let b = Rc::new(Cons3(10, RefCell::new(Rc::clone(&a))));
+
+        println!("a rc count after b creation = {}", Rc::strong_count(&a));
+        println!("b initial rc count = {}", Rc::strong_count(&b));
+        println!("b next item = {:?}", b.tail());
+
+        if let Some(link) = a.tail() {
+            *link.borrow_mut() = Rc::clone(&b);
+        }
+
+        println!("b rc count after changing a = {}", Rc::strong_count(&b));
+        println!("a rc count after changing a = {}", Rc::strong_count(&a));
+    }
+
+    use std::rc::Weak;
+    #[derive(Debug)]
+    struct Node {
+        value: i32,
+        parent: RefCell<Weak<Node>>,
+        children: RefCell<Vec<Rc<Node>>>,
+    }
+
+    /// 引用循环与内存泄漏, http://120.78.128.153/rustbook/ch15-06-reference-cycles.html
+    #[test]
+    fn leaf_node() {
+        let leaf = Rc::new(Node {
+            value: 3,
+            parent: RefCell::new(Weak::new()),
+            children: RefCell::new(vec![]),
+        });
+
+        println!(
+            "leaf strong = {}, weak = {}",
+            Rc::strong_count(&leaf),
+            Rc::weak_count(&leaf),
+        );
+
+        println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+
+        {
+            let branch = Rc::new(Node {
+                value: 5,
+                parent: RefCell::new(Weak::new()),
+                children: RefCell::new(vec![Rc::clone(&leaf)]),
+            });
+
+            *leaf.parent.borrow_mut() = Rc::downgrade(&branch);
+            println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+
+            println!(
+                "branch strong = {}, weak = {}",
+                Rc::strong_count(&branch),
+                Rc::weak_count(&branch),
+            );
+
+            println!(
+                "leaf strong = {}, weak = {}",
+                Rc::strong_count(&leaf),
+                Rc::weak_count(&leaf),
+            );
+        }
+
+        println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+        println!(
+            "leaf strong = {}, weak = {}",
+            Rc::strong_count(&leaf),
+            Rc::weak_count(&leaf),
+        );
+    }
 }
+
 pub trait Messenger {
     fn send(&self, msg: &str);
 }
