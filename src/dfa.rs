@@ -27,7 +27,13 @@ struct SensitiveWordMap {
     is_end: char,
     word_map: Option<HashMap<char, Box<SensitiveWordMap>>>,
 }
+
 /// 替换敏感字字符
+/// # Examples
+/// ```
+/// let result = rust_by_example::dfa::replace_sensitive_word("信用卡之家", &MatchType::MinMatchType, '*')
+/// assert_eq!(result,"**卡之家");
+/// ```
 pub fn replace_sensitive_word(txt: &str, match_type: &MatchType, replace_char: char) -> String {
     let set: BTreeSet<String> = find_sensitive_word(txt, match_type);
     let mut replace_str = String::from(txt);
@@ -337,6 +343,9 @@ fn read_file() {
 
         println!("{} --> {}", str, replace_str);
     }
+
+    let result = replace_sensitive_word("信用卡之家", &MatchType::MinMatchType, '*');
+    assert_eq!(result,"**卡之家");
 }
 
 #[test]
