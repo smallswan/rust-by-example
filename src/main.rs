@@ -11,6 +11,7 @@ mod serializing;
 mod snowflake;
 mod validators;
 mod closures;
+mod asyncprogram;
 
 const TO_SEARCH: &str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
