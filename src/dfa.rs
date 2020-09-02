@@ -345,7 +345,7 @@ fn read_file() {
     }
 
     let result = replace_sensitive_word("信用卡之家", &MatchType::MinMatchType, '*');
-    assert_eq!(result,"**卡之家");
+    assert_eq!(result, "**卡之家");
 }
 
 #[test]

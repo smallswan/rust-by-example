@@ -1,7 +1,6 @@
-extern crate image;
 extern crate chrono;
+extern crate image;
 use chrono::prelude::*;
-
 
 #[cfg(test)]
 mod tests {
@@ -363,7 +362,6 @@ mod tests {
             Rc::weak_count(&leaf),
         );
     }
-
 }
 
 pub trait Messenger {

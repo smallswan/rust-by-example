@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate crypto;
 
 use crypto::digest::Digest;
@@ -11,6 +12,9 @@ use std::str;
 //extern crate rustc_serialize;
 use rustc_serialize::base64::{ToBase64, STANDARD};
 use rustc_serialize::hex::ToHex;
+
+use chrono::prelude::*;
+use std::collections::HashMap;
 
 #[test]
 fn rust_crypt() {
@@ -55,4 +59,53 @@ fn rust_crypt() {
     //    };
     //
     //    println!("bcrypt result : {}",s);
+}
+
+#[test]
+fn alipay_sign() {
+    let secret_key = "abcdefgh".to_string();
+    use chrono::Utc;
+    let mut params_map = HashMap::<String, String>::new();
+
+    params_map.insert("service".to_string(), "api-demo".to_string());
+    params_map.insert("partner".to_string(), "2088101568338364".to_string());
+
+    params_map.insert(
+        "timestamp".to_string(),
+        Utc::now().timestamp_millis().to_string(),
+    );
+
+    params_map.insert("sign_type".to_string(), "MD5".to_string());
+
+    params_map.get("timestamp").expect("required timestamp");
+    params_map.get("sign_type").expect("required sign_type");
+
+    let mut keys = vec![];
+    for key in params_map.keys() {
+        if key != "sign" && key != "sign_type" {
+            keys.push(key);
+        }
+    }
+
+    keys.sort();
+
+    let mut params_str = "".to_string();
+    for key in keys {
+        if let Some(value) = params_map.get(key) {
+            params_str = format!("{}{}={}&", params_str, key, value);
+        }
+    }
+
+    params_str += &secret_key;
+
+    println!("params_str=>{}", params_str);
+
+    let mut md = Md5::new();
+    md.input_str(&params_str);
+    let sign = md.result_str();
+
+    println!("sign=>{}", sign);
+    params_map.insert("sign".to_string(), sign);
+
+    params_map.get("sign").expect("required sign");
 }

@@ -1,33 +1,37 @@
 // 该函数将闭包作为参数并调用它。
-fn apply<F>(f: F) where
+fn apply<F>(f: F)
+where
     // 闭包没有输入值和返回值。
-    F: FnOnce() {
+    F: FnOnce(),
+{
     // ^ 试一试：将 `FnOnce` 换成 `Fn` 或 `FnMut`。
 
     f();
 }
 
 // 输入闭包，返回一个 `i32` 整型的函数。
-fn apply_to_3<F>(f: F) -> i32 where
+fn apply_to_3<F>(f: F) -> i32
+where
     // 闭包处理一个 `i32` 整型并返回一个 `i32` 整型。
-    F: Fn(i32) -> i32 {
-
+    F: Fn(i32) -> i32,
+{
     f(3)
 }
-
 
 use std::thread;
 use std::time::Duration;
 
 struct Cacher<T>
-    where T: Fn(u32) -> u32
+where
+    T: Fn(u32) -> u32,
 {
     calculation: T,
     value: Option<u32>,
 }
 
 impl<T> Cacher<T>
-    where T: Fn(u32) -> u32
+where
+    T: Fn(u32) -> u32,
 {
     fn new(calculation: T) -> Cacher<T> {
         Cacher {
@@ -43,7 +47,7 @@ impl<T> Cacher<T>
                 let v = (self.calculation)(arg);
                 self.value = Some(v);
                 v
-            },
+            }
         }
     }
 }
@@ -57,14 +61,8 @@ fn generate_workout(intensity: u32, random_number: u32) {
     });
 
     if intensity < 25 {
-        println!(
-            "Today, do {} pushups!",
-            expensive_result.value(intensity)
-        );
-        println!(
-            "Next, do {} situps!",
-            expensive_result.value(intensity)
-        );
+        println!("Today, do {} pushups!", expensive_result.value(intensity));
+        println!("Next, do {} situps!", expensive_result.value(intensity));
     } else {
         if random_number == 3 {
             println!("Take a break today! Remember to stay hydrated!");
@@ -77,11 +75,10 @@ fn generate_workout(intensity: u32, random_number: u32) {
     }
 }
 
-
 #[test]
-fn closure_demo(){
+fn closure_demo() {
     use std::mem;
-    
+
     let greeting = "hello";
     // 不可复制的类型。
     // `to_owned` 从借用的数据创建有所有权的数据。
@@ -111,7 +108,5 @@ fn closure_demo(){
 
     println!("3 doubled: {}", apply_to_3(double));
 
-    generate_workout(30,20);
-
-
+    generate_workout(30, 20);
 }
