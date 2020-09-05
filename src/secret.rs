@@ -61,9 +61,13 @@ fn rust_crypt() {
     //    println!("bcrypt result : {}",s);
 }
 
+const SECRET_KEY: &str = "abcdefgh";
+lazy_static! {
+    static ref SUPPORT_SIGN_TYPE: Vec<&'static str> = { vec!["MD5", "SHA256"] };
+}
+
 #[test]
 fn alipay_sign() {
-    let secret_key = "abcdefgh".to_string();
     use chrono::Utc;
     let mut params_map = HashMap::<String, String>::new();
 
@@ -74,11 +78,6 @@ fn alipay_sign() {
         "timestamp".to_string(),
         Utc::now().timestamp_millis().to_string(),
     );
-
-    params_map.insert("sign_type".to_string(), "MD5".to_string());
-
-    params_map.get("timestamp").expect("required timestamp");
-    params_map.get("sign_type").expect("required sign_type");
 
     let mut keys = vec![];
     for key in params_map.keys() {
@@ -96,16 +95,80 @@ fn alipay_sign() {
         }
     }
 
-    params_str += &secret_key;
+    params_str += SECRET_KEY;
 
     println!("params_str=>{}", params_str);
 
-    let mut md = Md5::new();
-    md.input_str(&params_str);
-    let sign = md.result_str();
+    let sign_type = SUPPORT_SIGN_TYPE[1];
 
+    let mut sign: String = String::from("");
+    if sign_type == "MD5" {
+        let mut md = Md5::new();
+        md.input_str(&params_str);
+        sign = md.result_str();
+    } else if sign_type == "SHA256" {
+        let mut sha256 = Sha256::new();
+        sha256.input_str("hello world");
+        sign = sha256.result_str();
+    }
     println!("sign=>{}", sign);
-    params_map.insert("sign".to_string(), sign);
 
+    params_map.insert("sign_type".to_string(), sign_type.to_string());
+    params_map.insert("sign".to_string(), sign);
+    // params_map.insert("sign".to_string(), "".to_string());
+
+    let ok = verify_alipay_sign(params_map);
+    println!("verify_alipay_sign : {:?}", ok);
+}
+
+/// verify sign is valid
+pub fn verify_alipay_sign(params_map: HashMap<String, String>) -> Result<bool, &'static str> {
+    params_map.get("timestamp").expect("required timestamp");
+    let sign_type = params_map.get("sign_type").expect("required sign_type");
+    let sign_type_str = String::from(sign_type);
+
+    // sign_type(&String) -> sign_type_str(String) -> &*sign_type_str(&str)
+    if !SUPPORT_SIGN_TYPE.contains(&(&*sign_type_str)) {
+        return Err("not support this sign type");
+    }
     params_map.get("sign").expect("required sign");
+
+    let mut keys = vec![];
+    for key in params_map.keys() {
+        if key != "sign" && key != "sign_type" {
+            keys.push(key);
+        }
+    }
+
+    keys.sort();
+
+    let mut params_str = "".to_string();
+    for key in keys {
+        if let Some(value) = params_map.get(key) {
+            params_str = format!("{}{}={}&", params_str, key, value);
+        }
+    }
+
+    params_str += SECRET_KEY;
+
+    let mut sign: String = String::from("");
+    if sign_type == "MD5" {
+        let mut md = Md5::new();
+        md.input_str(&params_str);
+        sign = md.result_str();
+    } else if sign_type == "SHA256" {
+        let mut sha256 = Sha256::new();
+        sha256.input_str("hello world");
+        sign = sha256.result_str();
+    }
+
+    if let Some(param_sign) = params_map.get("sign") {
+        if *param_sign == sign {
+            return Ok(true);
+        } else {
+            return Ok(false);
+        }
+    } else {
+        return Ok(false);
+    }
 }
