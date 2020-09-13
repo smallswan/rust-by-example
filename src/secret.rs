@@ -6,8 +6,9 @@ use crypto::md5::Md5;
 use crypto::sha2::Sha256;
 use crypto::sha3::Sha3;
 
-use std::str;
-//use crypto::bcrypt;
+// use std::io::prelude::BufRead;
+use crypto::bcrypt;
+use std::{fs::File, io::BufRead, io::BufReader, str};
 //use rustc_hex::{ToHex,FromHex};
 //extern crate rustc_serialize;
 use rustc_serialize::base64::{ToBase64, STANDARD};
@@ -44,13 +45,13 @@ fn rust_crypt() {
     let cost = 5u32;
     let salt = String::from("0123456789ABCDEF");
     let mut output = vec![0x00u8; 24];
-    crypto::bcrypt::bcrypt(cost, &salt.as_bytes(), &password.as_bytes(), &mut output);
+    bcrypt::bcrypt(cost, &salt.as_bytes(), &password.as_bytes(), &mut output);
 
-    println!("{:?}", output);
+    println!("bcrypt:{:?}", output);
 
     let output2 = output.as_slice();
-    println!("{:?}", output2.to_hex());
-    println!("{:?}", output2.to_base64(STANDARD));
+    println!("bcrypt hex:{:?}", output2.to_hex());
+    println!("bcrypt base64:{:?}", output2.to_base64(STANDARD));
     //    rustc_serialize::hex::
 
     //    let s = match str::from_utf8(output.as_slice()) {
@@ -61,7 +62,7 @@ fn rust_crypt() {
     //    println!("bcrypt result : {}",s);
 }
 
-const SECRET_KEY: &str = "abcdefgh";
+const ALIPAY_SIGN_SECRET_KEY: &str = "abcdefgh";
 lazy_static! {
     static ref SUPPORT_SIGN_TYPE: Vec<&'static str> = { vec!["MD5", "SHA256"] };
 }
@@ -95,7 +96,7 @@ fn alipay_sign() {
         }
     }
 
-    params_str += SECRET_KEY;
+    params_str += ALIPAY_SIGN_SECRET_KEY;
 
     println!("params_str=>{}", params_str);
 
@@ -119,6 +120,14 @@ fn alipay_sign() {
 
     let ok = verify_alipay_sign(params_map);
     println!("verify_alipay_sign : {:?}", ok);
+
+    let mut params_map2 = HashMap::<String, String>::new();
+    params_map2.insert("sign_type".to_string(), "SHA512".to_string());
+    params_map2.insert(
+        "timestamp".to_string(),
+        Utc::now().timestamp_millis().to_string(),
+    );
+    verify_alipay_sign(params_map2).expect_err("Not support SHA512");
 }
 
 /// verify sign is valid
@@ -149,7 +158,7 @@ pub fn verify_alipay_sign(params_map: HashMap<String, String>) -> Result<bool, &
         }
     }
 
-    params_str += SECRET_KEY;
+    params_str += ALIPAY_SIGN_SECRET_KEY;
 
     let mut sign: String = String::from("");
     if sign_type == "MD5" {
@@ -170,5 +179,17 @@ pub fn verify_alipay_sign(params_map: HashMap<String, String>) -> Result<bool, &
         }
     } else {
         return Ok(false);
+    }
+}
+
+#[test]
+fn rust_analyzer_demo() {
+    File::open("no-exists.txt").expect_err("must occured error");
+
+    let demo_file = File::open("why-rust.txt").expect("can't open this file");
+    let reader = BufReader::new(demo_file);
+    let lines = reader.lines();
+    for line in lines.map(|line| line.unwrap()) {
+        println!("{}", line);
     }
 }
