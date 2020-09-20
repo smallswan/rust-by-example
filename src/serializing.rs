@@ -76,6 +76,51 @@ fn json_file() {
     }
 }
 
+#[derive(Deserialize, Debug)]
+struct Request {
+    // Use the result of a function as the default if "resource" is
+    // not included in the input.
+    #[serde(default = "default_resource")]
+    resource: String,
+
+    // Use the type's implementation of std::default::Default if
+    // "timeout" is not included in the input.
+    #[serde(default)]
+    timeout: Timeout,
+
+    // Use a method from the type as the default if "priority" is not
+    // included in the input. This may also be a trait method.
+    #[serde(default = "Priority::lowest")]
+    priority: Priority,
+}
+
+fn default_resource() -> String {
+    "/".to_string()
+}
+
+/// Timeout in seconds.
+#[derive(Deserialize, Debug)]
+struct Timeout(u32);
+impl Default for Timeout {
+    fn default() -> Self {
+        Timeout(30)
+    }
+}
+
+#[derive(Deserialize, Debug)]
+enum Priority {
+    ExtraHigh,
+    High,
+    Normal,
+    Low,
+    ExtraLow,
+}
+impl Priority {
+    fn lowest() -> Self {
+        Priority::ExtraLow
+    }
+}
+
 #[macro_use]
 use serde_json::json;
 
@@ -90,5 +135,145 @@ fn marco_json_demo() {
     "payload": {
         features[0]: features[1]
     }});
-    println!("{:?},{:?}", value["success"], value["no_exist"]);
+    println!(
+        "{:?},{:?},{:?},{:?}",
+        value["code"], value["payload"], value["success"], value["no_exist"]
+    );
+
+    let json = r#"
+    [
+      {
+        "resource": "/users"
+      },
+      {
+        "timeout": 5,
+        "priority": "High"
+      }
+    ]
+    "#;
+
+    let requests: Vec<Request> = serde_json::from_str(json).unwrap();
+    // The first request has resource="/users", timeout=30, priority=ExtraLow
+    println!("{:?}", requests[0]);
+
+    // The second request has resource="/", timeout=5, priority=High
+    println!("{:?}", requests[1]);
+}
+
+use serde_json::Value;
+use std::collections::hash_map::HashMap;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct User {
+    id: String,
+    username: String,
+    #[serde(flatten)]
+    extra: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Pagination {
+    limit: u64,
+    offset: u64,
+    total: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Users {
+    users: Vec<User>,
+
+    #[serde(flatten)]
+    pagination: Pagination,
+}
+
+#[test]
+fn attr_flatten() {
+    let users = r#"
+    {
+        "limit": 100,
+        "offset": 200,
+        "total": 1053,
+        "users": [
+          {"id": "49824073-979f-4814-be10-5ea416ee1c2f", "username": "john_doe", "mascot": "Ferris"}
+        ]
+    }
+    "#;
+
+    let users_json: Users = serde_json::from_str(&users).unwrap();
+
+    println!(
+        "{} , {:?}",
+        users_json.pagination.limit, users_json.users[0]
+    );
+}
+
+use serde::{de, Deserializer};
+use std::fmt::Display;
+use std::str::FromStr;
+
+#[derive(Deserialize, Debug)]
+struct Outer<'a, S, T: 'a + ?Sized> {
+    // When deriving the Deserialize impl, Serde would want to generate a bound
+    // `S: Deserialize` on the type of this field. But we are going to use the
+    // type's `FromStr` impl instead of its `Deserialize` impl by going through
+    // `deserialize_from_str`, so we override the automatically generated bound
+    // by the one required for `deserialize_from_str`.
+    #[serde(deserialize_with = "deserialize_from_str")]
+    #[serde(bound(deserialize = "S: FromStr, S::Err: Display"))]
+    s: S,
+
+    // Here Serde would want to generate a bound `T: Deserialize`. That is a
+    // stricter condition than is necessary. In fact, the `main` function below
+    // uses T=str which does not implement Deserialize. We override the
+    // automatically generated bound by a looser one.
+    #[serde(bound(deserialize = "Ptr<'a, T>: Deserialize<'de>"))]
+    ptr: Ptr<'a, T>,
+}
+
+/// Deserialize a type `S` by deserializing a string, then using the `FromStr`
+/// impl of `S` to create the result. The generic type `S` is not required to
+/// implement `Deserialize`.
+fn deserialize_from_str<'de, S, D>(deserializer: D) -> Result<S, D::Error>
+where
+    S: FromStr,
+    S::Err: Display,
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    S::from_str(&s).map_err(de::Error::custom)
+}
+
+/// A pointer to `T` which may or may not own the data. When deserializing we
+/// always want to produce owned data.
+#[derive(Debug)]
+enum Ptr<'a, T: 'a + ?Sized> {
+    Ref(&'a T),
+    Owned(Box<T>),
+}
+
+impl<'de, 'a, T: 'a + ?Sized> Deserialize<'de> for Ptr<'a, T>
+where
+    Box<T>: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Deserialize::deserialize(deserializer).map(Ptr::Owned)
+    }
+}
+
+#[test]
+fn generic_type() {
+    let j = r#"
+        {
+            "s": "1234567890",
+            "ptr": "owned"
+        }
+    "#;
+
+    let result: Outer<u64, str> = serde_json::from_str(j).unwrap();
+
+    // result = Outer { s: 1234567890, ptr: Owned("owned") }
+    println!("result = {:?}", result);
 }
