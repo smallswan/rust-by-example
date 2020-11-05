@@ -270,6 +270,25 @@ mod tests {
         println!("c after = {:?}", c);
     }
 
+    #[test]
+    fn rc() {
+        let c = RefCell::new("hello".to_owned());
+        *c.borrow_mut() = "bonjour".to_owned();
+        assert_eq!(&*c.borrow(), "bonjour");
+
+        let mut c = RefCell::new(5);
+        *c.get_mut() += 1;
+        assert_eq!(c, RefCell::new(6));
+
+        let x_vec = RefCell::new(vec![1, 2, 3, 4, 5]);
+        let mut mut_v = x_vec.borrow_mut();
+        mut_v.push(6);
+
+        // 运行时借用检查
+        // let mut mut_v2 = x_vec.borrow_mut();
+        // mut_v2.push(7);
+    }
+
     #[derive(Debug)]
     enum List3 {
         Cons3(i32, RefCell<Rc<List3>>),

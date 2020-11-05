@@ -207,5 +207,20 @@ fn main() {
     // `consume` 消耗了该变量，所以该闭包只能调用一次。
     consume();
     //consume();
-    // ^ 试一试：将此行注释去掉。
+    // ^
+
+    println!("{}", GREETING);
+
+    let mut s = String::from("foo");
+
+    s.push_str("bar");
+
+    assert_eq!("foobar", s);
+    println!("{}", s);
 }
+
+const fn hello() -> &'static str {
+    "Hello world"
+}
+
+const GREETING: &str = hello();

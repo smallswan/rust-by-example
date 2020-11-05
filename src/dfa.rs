@@ -48,14 +48,15 @@ pub fn replace_sensitive_word(txt: &str, match_type: &MatchType, replace_char: c
 /// 判断文字是否包含敏感字符
 ///
 pub fn is_contains_sensitive_word(txt: &str, match_type: &MatchType) -> bool {
-    let is_contains = false;
+    let mut is_contains = false;
     let len = txt.chars().count();
     let txt_vec: Vec<char> = txt.chars().collect();
     let mut i = 0;
     while i < len {
         let length = check_sensitive_word(&txt, i, match_type);
         if length > 0 {
-            return true;
+            is_contains = true;
+            break;
         }
         i += 1;
     }
@@ -183,9 +184,9 @@ fn recursive_build_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mu
     if let Some(ch) = chars.next() {
         *count -= 1;
         if let Some(now_map) = map.word_map.as_mut() {
-            let contains_key = now_map.contains_key(&ch);
+            // let contains_key = now_map.contains_key(&ch);
 
-            if contains_key {
+            if now_map.contains_key(&ch) {
                 if let Some(m) = now_map.get_mut(&ch) {
                     recursive_build_map(&mut *m, &mut *chars, count);
                 }
@@ -371,8 +372,14 @@ fn set_iter() {
     b_tree_set.insert(String::from("D"));
     b_tree_set.insert(String::from("E"));
 
-    for val in b_tree_set {
+    for val in &b_tree_set {
         println!("{}", val);
     }
+
+    let rm_key = String::from("C");
+    b_tree_set.remove(&rm_key);
+
+    println!("b_tree_set has {} items", b_tree_set.len());
+
     println!("using {} coding rust program is greate", "VSCode");
 }
