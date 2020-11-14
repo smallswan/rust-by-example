@@ -217,6 +217,20 @@ fn main() {
 
     assert_eq!("foobar", s);
     println!("{}", s);
+
+    let mut f = counter(2);
+    assert_eq!(3, f(1));
+    println!("counter : {}", f(2));
+
+    // https://doc.rust-lang.org/std/primitive.fn.html
+    let not_bar_ptr = bar; //`not_bar_ptr` is zero-sized, uniquely identifying `bar`
+    assert_eq!(mem::size_of_val(&not_bar_ptr), 0);
+
+    let bar_ptr: fn(i32) = not_bar_ptr; //force coercion to function pointer
+    assert_eq!(mem::size_of_val(&bar_ptr), mem::size_of::<usize>());
+
+    let footgun = &bar; // this is a shared reference to the zero-sized type identifying `bar`
+    println!("size of footgun {}", mem::size_of_val(footgun));
 }
 
 const fn hello() -> &'static str {
@@ -224,3 +238,9 @@ const fn hello() -> &'static str {
 }
 
 const GREETING: &str = hello();
+
+fn counter(i: i32) -> impl FnMut(i32) -> i32 {
+    move |n| n + i
+}
+
+fn bar(x: i32) {}
