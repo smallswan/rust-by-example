@@ -223,6 +223,7 @@ fn main() {
     println!("counter : {}", f(2));
 
     // https://doc.rust-lang.org/std/primitive.fn.html
+    // not_bar_ptr is function item
     let not_bar_ptr = bar; //`not_bar_ptr` is zero-sized, uniquely identifying `bar`
     assert_eq!(mem::size_of_val(&not_bar_ptr), 0);
 
@@ -231,6 +232,29 @@ fn main() {
 
     let footgun = &bar; // this is a shared reference to the zero-sized type identifying `bar`
     println!("size of footgun {}", mem::size_of_val(footgun));
+
+    // let closures_vec = vec![contains,max];
+
+    let a = A(1, 2);
+    let add = A::sum; //Fn Item
+    let add_math = A::math;
+    assert_eq!(add(1, 2), A::sum(1, 2));
+    assert_eq!(add_math(&a), a.math());
+
+    let rgb = color;
+    println!("size1 {:?}", mem::size_of_val(&rgb));
+
+    show(rgb); //函数项隐式转换为函数指针
+
+    //1. 函数项类型可以通过显式指定函数类型转换为一个函数指针类型
+    let c: fn(&str) -> RGB = rgb;
+    println!("size2 {:?}", mem::size_of_val(&c));
+
+    show(c);
+
+    //  闭包与函数指针互通
+    let c1 = |s: &str| (1, 2, 3);
+    show(c1);
 }
 
 const fn hello() -> &'static str {
@@ -244,3 +268,33 @@ fn counter(i: i32) -> impl FnMut(i32) -> i32 {
 }
 
 fn bar(x: i32) {}
+
+struct A(i32, i32);
+
+impl A {
+    //常规函数
+    fn sum(a: i32, b: i32) -> i32 {
+        a + b
+    }
+
+    // 方法
+    fn math(&self) -> i32 {
+        Self::sum(self.0, self.1)
+    }
+}
+
+enum Color {
+    R(i16),
+    G(i16),
+    B(i16),
+}
+
+type RGB = (i16, i16, i16);
+
+fn color(c: &str) -> RGB {
+    (1, 1, 1)
+}
+
+fn show(c: fn(&str) -> RGB) {
+    println!("{:?}", c("black"));
+}
