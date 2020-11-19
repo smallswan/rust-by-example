@@ -352,6 +352,57 @@ fn main() {
         .collect::<Vec<f32>>();
 
     println!("{:?}", actual_numbers);
+
+    let company_vec2 = vec![
+        Company::new("Umbrella Corporation", "Unknown"),
+        Company::new("Ovintiv", "Doug Suttles"),
+        Company::new("The Red-Headed League", ""),
+        Company::new("Stark Enterprises", ""),
+    ];
+
+    let mut result_vec = vec![];
+    company_vec2
+        .iter()
+        .for_each(|company| result_vec.push(company.get_ceo().ok_or("Not found Ceo")));
+
+    for item in result_vec {
+        println!("{:?}", item);
+    }
+
+    let company_vec3 = vec![
+        Company::new("Umbrella Corporation", "Unknown"),
+        Company::new("Ovintiv", "Doug Suttles"),
+        Company::new("The Red-Headed League", ""),
+        Company::new("Stark Enterprises", ""),
+    ];
+
+    let mut result_vec3 = vec![];
+    company_vec3.iter().for_each(|company| {
+        result_vec3.push(
+            company
+                .get_ceo()
+                .ok_or_else(|| format!("Not found Ceo for {}", company.name)),
+        )
+    });
+
+    for item in result_vec3 {
+        println!("{:?}", item);
+    }
+
+    let char_vec = ('a'..'働').collect::<Vec<char>>();
+    in_char_vec(&char_vec, 'i');
+    in_char_vec(&char_vec, '뷁');
+    in_char_vec(&char_vec, '鑿');
+
+    let smaller_vec = ('A'..'z').collect::<Vec<char>>();
+    println!(
+        "All alphabetic? {}",
+        smaller_vec.iter().all(|&x| x.is_alphabetic())
+    );
+    println!(
+        "All less than the character 행? {}",
+        smaller_vec.iter().all(|&x| x < '행')
+    );
 }
 
 const fn hello() -> &'static str {
@@ -445,4 +496,12 @@ impl Company {
     fn get_ceo(&self) -> Option<String> {
         self.ceo.clone()
     }
+}
+
+fn in_char_vec(char_vec: &Vec<char>, check: char) {
+    println!(
+        "Is {} inside? {}",
+        check,
+        char_vec.iter().any(|&char| char == check)
+    );
 }
