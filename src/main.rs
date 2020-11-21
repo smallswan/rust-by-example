@@ -11,6 +11,7 @@ mod easyrust;
 mod random;
 mod secret;
 mod serializing;
+mod smartpointer;
 mod snowflake;
 mod validators;
 
