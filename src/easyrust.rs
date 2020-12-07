@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::collections::VecDeque;
+
 #[derive(Debug)]
 struct Names {
     one_word: Vec<String>,
@@ -305,4 +308,83 @@ fn helpful_methods_for_iterators_and_closure() {
     }
 
     println!("{:?}", all_names);
+}
+
+#[test]
+fn collections_std() {
+    let mut letters = HashMap::new();
+
+    for ch in "a short treatise on fungi".chars() {
+        let counter = letters.entry(ch).or_insert(0);
+        *counter += 1;
+    }
+
+    assert_eq!(letters[&'s'], 2);
+    assert_eq!(letters[&'t'], 3);
+    assert_eq!(letters[&'u'], 1);
+    println!("{:?}", letters.get(&'b'));
+    assert_eq!(letters.get(&'y'), None);
+
+    assert_eq!(letters.remove(&'c'), None);
+
+    let mut buf = VecDeque::new();
+    buf.push_back(3);
+    buf.push_back(4);
+    buf.push_back(5);
+    assert_eq!(buf.get(1), Some(&4));
+
+    if let Some(elem) = buf.get_mut(1) {
+        *elem = 7;
+    }
+
+    assert_eq!(buf[1], 7);
+
+    let mut buf: VecDeque<i32> = vec![1, 2].into_iter().collect();
+    let mut buf2: VecDeque<i32> = vec![3, 4].into_iter().collect();
+    buf.append(&mut buf2);
+    assert_eq!(buf, [1, 2, 3, 4]);
+
+    println!("front : {:?}", buf.front());
+    println!("buf2 : {:?}", buf2);
+
+    // E2082 无法推断类型
+    //assert_eq!(buf2, []);
+    assert_eq!(buf2, [0; 0]);
+    assert_eq!(buf2, vec![0; 0]);
+
+    let mut scores = [7, 8, 9];
+    for score in &mut scores[..] {
+        *score += 1;
+    }
+    println!("{:?}", scores);
+
+    let mut buf = VecDeque::new();
+    buf.extend(1..5);
+    buf.retain(|&x| x % 2 == 0);
+    assert_eq!(buf, [2, 4]);
+
+    let mut vector = VecDeque::new();
+
+    vector.push_back(0);
+    vector.push_back(1);
+
+    vector.push_front(10);
+    vector.push_front(9);
+
+    println!("{:?}", vector);
+
+    vector.as_mut_slices().0[0] = 42;
+    vector.as_mut_slices().1[0] = 24;
+    assert_eq!(vector.as_slices(), (&[42, 10][..], &[24, 1][..]));
+
+    println!("{:?}", vector);
+
+    let mut v: VecDeque<_> = vec![1, 2, 3].into_iter().collect();
+    let drained = v.drain(2..).collect::<VecDeque<_>>();
+    assert_eq!(drained, [3]);
+    assert_eq!(v, [1, 2]);
+
+    // A full range clears all contents
+    v.drain(..);
+    assert!(v.is_empty());
 }

@@ -110,3 +110,60 @@ fn closure_demo() {
 
     generate_workout(30, 20);
 }
+
+use itertools::interleave;
+use itertools::Itertools;
+#[test]
+fn iter_adaptors() {
+    let rev_v: Vec<i32> = vec![1, 2, 3]
+        .into_iter()
+        .map(|item| item + 1)
+        .rev()
+        .collect();
+    assert_eq!(rev_v, [4, 3, 2]);
+
+    let mut c = 0;
+
+    for pair in vec!['a', 'b', 'c']
+        .into_iter()
+        .map(|letter| {
+            c += 1;
+            (letter, c)
+        })
+        .rev()
+    {
+        println!("{:?}", pair);
+    }
+
+    let it = (1..3).interleave(vec![-1, -2]);
+    itertools::assert_equal(it, vec![1, -1, 2, -2]);
+
+    for elt in interleave(&[1, 2, 3], &[2, 3, 4]) {
+        /* loop body */
+        println!("{:?}", elt);
+    }
+
+    itertools::assert_equal((0..3).intersperse(8), vec![0, 8, 1, 8, 2]);
+
+    // An adaptor that gathers elements in pairs
+    let pit = (0..4).batching(|it| match it.next() {
+        None => None,
+        Some(x) => match it.next() {
+            None => None,
+            Some(y) => Some((x, y)),
+        },
+    });
+
+    itertools::assert_equal(pit, vec![(0, 1), (2, 3)]);
+
+    let input = vec![vec![1], vec![2, 3], vec![4, 5, 6]];
+    assert_eq!(input.into_iter().concat(), vec![1, 2, 3, 4, 5, 6]);
+
+    let mut iter = "αβγ".chars().dropping(2);
+    itertools::assert_equal(iter, "γ".chars());
+
+    let a = (0..).zip("bc".chars());
+    let b = (0..).zip("ad".chars());
+    let it = a.merge_by(b, |x, y| x.1 <= y.1);
+    itertools::assert_equal(it, vec![(0, 'a'), (0, 'b'), (1, 'c'), (1, 'd')]);
+}
