@@ -14,6 +14,7 @@ mod serializing;
 mod smartpointer;
 mod snowflake;
 mod validators;
+pub mod visible;
 
 const TO_SEARCH: &str = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
 
@@ -257,6 +258,10 @@ fn main() {
     //  闭包与函数指针互通
     let c1 = |s: &str| (1, 2, 3);
     show(c1);
+
+    visible::outer_mod::inner_mod::crate_visible_fn();
+
+    visible::outer_mod::foo();
 }
 
 const fn hello() -> &'static str {

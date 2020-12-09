@@ -12,3 +12,11 @@
 - 统一社会信用代码验证
 - 雪花算法(snowflake)
 - 敏感词检测（DFA算法）
+
+## 运行测试
+```
+cargo test -- --nocapture validators::tests::money_test
+cargo test -- --nocapture random::tests::first_demo
+cargo test -- --nocapture tests::hof
+cargo test -- --nocapture sensitive_word
+```

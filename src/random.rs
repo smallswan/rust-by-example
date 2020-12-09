@@ -80,6 +80,6 @@ mod tests {
         let mut nums: Vec<i32> = (1..100).collect();
         nums.shuffle(&mut rng);
 
-        println!("{:?}", nums)
+        println!("{:?}", nums);
     }
 }

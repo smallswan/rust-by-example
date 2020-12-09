@@ -27,7 +27,7 @@ mod tests {
         n % 2 == 1
     }
     #[test]
-    fn hof() {
+    pub fn hof() {
         println!("Find the sum of all the squared odd numbers under 1000");
         let upper = 1000;
 
