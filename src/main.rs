@@ -5,6 +5,7 @@ extern crate lazy_static;
 
 mod asyncprogram;
 mod closures;
+mod concurrent;
 mod datetime;
 mod dfa;
 mod easyrust;
