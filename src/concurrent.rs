@@ -5,6 +5,7 @@ use std::time::Duration;
 
 #[test]
 fn move_ref_to_thread() {
+    //1. 标准库
     let duration = Duration::from_millis(500);
     println!("Main thread");
 
@@ -24,6 +25,7 @@ fn move_ref_to_thread() {
 
     handle.join().unwrap();
 
+    //2. crossbeam库
     let mut vec = vec![1, 2, 3, 4, 5, 6];
     crossbeam::scope(|scope| {
         for e in &vec {
@@ -36,6 +38,7 @@ fn move_ref_to_thread() {
 
     println!("{:?}", vec);
 
+    //3. 标准库Arc,Mutex
     let v = Arc::new(Mutex::new(vec![1, 2, 3]));
     for i in 0..3 {
         let cloned_v = v.clone();
@@ -70,6 +73,8 @@ fn sum_of_squares(input: &[i32]) -> i32 {
     input.par_iter().map(|i| i * i).sum()
 }
 
+/// parallel quicksort
+/// https://github.com/nikomatsakis/rayon/blob/22f04aee0e12b31e029ec669299802d6e2f86bf6/src/test.rs#L6-L28
 #[test]
 fn work_stealing_demo() {
     let mut v = [1, 0, 3, 0, 5, 6];
