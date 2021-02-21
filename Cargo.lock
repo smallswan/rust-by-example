@@ -763,6 +763,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "crossbeam",
+ "crossbeam-channel",
  "futures",
  "image 0.23.4",
  "itertools",
