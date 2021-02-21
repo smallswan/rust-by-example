@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate crossbeam_channel;
 
 extern crate chrono;
