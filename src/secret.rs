@@ -7,6 +7,7 @@ use crypto::sha2::Sha256;
 use crypto::sha3::Sha3;
 
 // use std::io::prelude::BufRead;
+use core::time;
 use crypto::bcrypt;
 use std::{fs::File, io::BufRead, io::BufReader, str};
 //use rustc_hex::{ToHex,FromHex};
@@ -16,6 +17,24 @@ use rustc_serialize::hex::ToHex;
 
 use chrono::prelude::*;
 use std::collections::HashMap;
+
+/// 支付宝-支付API， https://opendocs.alipay.com/apis/api_1/alipay.trade.pay
+#[derive(new, Debug)]
+struct AlipayPayParam {
+    app_id: String,
+    method: String,
+    #[new(value="utf-8".to_string())]
+    charset: String,
+    sign_type: String,
+    #[new(default)]
+    pub sign: String,
+    timestamp: String,
+    #[new(value="1.0".to_string())]
+    version: String,
+    biz_content: String,
+}
+
+pub trait AlipaySign {}
 
 #[test]
 fn rust_crypt() {
@@ -192,4 +211,33 @@ fn rust_analyzer_demo() {
     for line in lines.map(|line| line.unwrap()) {
         println!("{}", line);
     }
+}
+
+#[test]
+fn derive_demo() {
+    let biz_content = r#"{"out_trade_no":"20150320010101001"}"#;
+    let mut param = AlipayPayParam::new(
+        "2014072300007148".to_owned(),
+        "alipay.trade.page.pay".to_owned(),
+        "utf-8".to_owned(),
+        "RSA2".to_owned(),
+        "2014-07-24 03:07:50".to_owned(),
+        "1.0".to_owned(),
+        biz_content.to_string(),
+    );
+    param.sign = "abcde".to_string();
+
+    println!("{:?}", param);
+
+    let param0 = AlipayPayParam {
+        app_id: "2014072300007148".to_owned(),
+        method: "alipay.trade.page.pay".to_owned(),
+        charset: "utf-8".to_owned(),
+        sign_type: "RSA2".to_owned(),
+        sign: "abcde".to_string(),
+        timestamp: "2014-07-24 03:07:50".to_owned(),
+        version: "1.0".to_owned(),
+        biz_content: biz_content.to_string(),
+    };
+    println!("{:?}", param0);
 }

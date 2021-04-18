@@ -176,7 +176,7 @@ use std::collections::HashMap;
 use std::sync::Condvar;
 
 /// 无悔并发
-/// 
+///
 /// [示例5: 确保从缓存中取共享数据的行为是确定的](file:///C:/repositories/github/geektime-Rust/Codes/source_codes/target/doc/inviting_rust/ch02/s3_thread_safe/fn.understand_channel_and_condvar.html )
 #[test]
 fn understand_channel_and_condvar() {

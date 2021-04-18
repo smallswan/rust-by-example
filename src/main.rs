@@ -2,6 +2,8 @@
 #![allow(unused)]
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate derive_new;
 
 mod asyncprogram;
 mod closures;
