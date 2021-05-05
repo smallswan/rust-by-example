@@ -130,8 +130,6 @@ fn main() {
     let t1 = &t[..];
     assert_eq!(t1.find("Léopard"), Some(13));
 
-    datetime::formatting_and_parsing();
-
     random::rand_demo();
 
     let len = String::from("Здравствуйте").len();
