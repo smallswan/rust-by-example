@@ -5,6 +5,7 @@ use crypto::digest::Digest;
 use crypto::md5::Md5;
 use crypto::sha2::Sha256;
 use crypto::sha3::Sha3;
+use futures::StreamExt;
 
 // use std::io::prelude::BufRead;
 use core::time;
@@ -353,4 +354,71 @@ fn base64_demo() {
     println!("origin: {}", str::from_utf8(hello).unwrap());
     println!("base64 encoded: {}", encoded);
     println!("back to origin: {}", str::from_utf8(&decoded).unwrap());
+}
+
+use num::bigint::{BigInt, ToBigInt};
+#[test]
+fn big_int() {
+    let big = factorial(100);
+    println!("{}! equals {}", 100, big);
+
+    let ten_radix_str = format!("{}", big);
+    let iter = ten_radix_str.chars().rev();
+    let mut count = 0;
+    for ch in iter {
+        if ch == '0' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+
+    println!("阶乘后的0：{}", count);
+
+    println!("阶乘后的0：{}", trailing_zeroes(100));
+    println!("阶乘后的0：{}", trailing_zeroes_v2(100));
+
+    if let Some(count_zeros) = big.trailing_zeros() {
+        println!("{}", count_zeros);
+    };
+}
+
+/// 计算x的阶乘，即x!
+fn factorial(x: i32) -> BigInt {
+    if let Some(mut facatorial) = 1.to_bigint() {
+        for i in 1..(x + 1) {
+            facatorial = facatorial * i;
+        }
+        facatorial
+    } else {
+        panic!("Failed to calculate factorial!");
+    }
+}
+
+/// 力扣（172. 阶乘后的零） https://leetcode-cn.com/problems/factorial-trailing-zeroes/
+pub fn trailing_zeroes(n: i32) -> i32 {
+    let mut count_fives = 0;
+    let mut steps: Vec<i32> = (5..=n).into_iter().filter(|x| *x % 5 == 0).collect();
+    // println!("{:?}",steps);
+    for step in steps {
+        let mut remaining = step;
+        while remaining % 5 == 0 {
+            count_fives += 1;
+            remaining /= 5;
+        }
+    }
+
+    count_fives
+}
+
+/// 力扣（172. 阶乘后的零）
+/// f(n) = n/5^1 + n/5^2 + n/5^3 + n/5^m (n < 5^m)
+pub fn trailing_zeroes_v2(n: i32) -> i32 {
+    let mut count_fives = 0;
+    let mut remaining = n;
+    while remaining > 0 {
+        remaining /= 5;
+        count_fives += remaining;
+    }
+    count_fives
 }
