@@ -245,7 +245,7 @@ fn derive_demo() {
 
 /// 使用 PBKDF2 对密码进行加密（salt）和散列（hash）运算
 /// https://rust-cookbook.budshome.com/cryptography/encryption.html
-use data_encoding::{DecodeError, HEXUPPER};
+use data_encoding::{DecodeError, HEXLOWER, HEXUPPER};
 use ring::error::Unspecified;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
@@ -421,4 +421,42 @@ pub fn trailing_zeroes_v2(n: i32) -> i32 {
         count_fives += remaining;
     }
     count_fives
+}
+
+use libsm::sm3::hash::Sm3Hash;
+use libsm::sm4::Cipher;
+use libsm::sm4::Mode;
+#[test]
+fn sm() {
+    let string = String::from("abc");
+    let mut hash = Sm3Hash::new(string.as_bytes());
+    let digest: [u8; 32] = hash.get_hash();
+
+    let hex_str = HEXLOWER.encode(&digest);
+    println!("{}", hex_str);
+
+    let key: [u8; 16] = [
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32,
+        0x10,
+    ];
+    let cipher = Cipher::new(&key, Mode::Cbc);
+
+    let iv = rand_block();
+    let poem = String::from("断头今日意如何？创业艰难百战多。此去泉台招旧部 ，旌旗十万斩阎罗。");
+    let encrypt_bytes = cipher.encrypt(&poem.as_bytes(), &iv);
+
+    let plaintext_bytes = cipher.decrypt(&encrypt_bytes, &iv);
+    let poem1 = String::from_utf8(plaintext_bytes.to_vec()).unwrap();
+    println!("{}", poem1);
+}
+
+// rand 和 ring::rand冲突了
+extern crate rand as random;
+fn rand_block() -> [u8; 16] {
+    use random::prelude::*;
+    // let mut rng = OsRng::new().unwrap();
+    let mut rng = random::thread_rng();
+    let mut block: [u8; 16] = [0; 16];
+    rng.fill_bytes(&mut block[..]);
+    block
 }
