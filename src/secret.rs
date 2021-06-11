@@ -18,6 +18,7 @@ use rustc_serialize::hex::ToHex;
 
 use chrono::prelude::*;
 use std::collections::HashMap;
+use stopwatch::Stopwatch;
 
 /// 支付宝-支付API， https://opendocs.alipay.com/apis/api_1/alipay.trade.pay
 #[derive(new, Debug)]
@@ -423,6 +424,7 @@ pub fn trailing_zeroes_v2(n: i32) -> i32 {
     count_fives
 }
 
+use libsm::sm2::signature::{SigCtx, Signature};
 use libsm::sm3::hash::Sm3Hash;
 use libsm::sm4::Cipher;
 use libsm::sm4::Mode;
@@ -444,10 +446,30 @@ fn sm() {
     let iv = rand_block();
     let poem = String::from("断头今日意如何？创业艰难百战多。此去泉台招旧部 ，旌旗十万斩阎罗。");
     let encrypt_bytes = cipher.encrypt(&poem.as_bytes(), &iv);
-
+    println!("{}", HEXLOWER.encode(&encrypt_bytes));
     let plaintext_bytes = cipher.decrypt(&encrypt_bytes, &iv);
     let poem1 = String::from_utf8(plaintext_bytes.to_vec()).unwrap();
     println!("{}", poem1);
+
+    let poem2 = String::from("南国烽烟正十年，此头须向国门悬。后死诸君多努力，捷报飞来当纸钱。");
+    let msg = poem2.as_bytes();
+
+    let mut sw = Stopwatch::new();
+    // SM2签名速度快，验签速度慢
+    let ctx = SigCtx::new();
+    let (pk, sk) = ctx.new_keypair();
+
+    println!("elapsed_ms 0:{:?}", sw.elapsed());
+
+    sw.restart();
+    let signature = ctx.sign(msg, &sk, &pk);
+
+    println!("elapsed_ms 1:{:?}", sw.elapsed());
+
+    sw.restart();
+    let valid = ctx.verify(msg, &pk, &signature);
+
+    println!("valid:{},elapsed_ms:{:?}", valid, sw.elapsed());
 }
 
 // rand 和 ring::rand冲突了
@@ -458,5 +480,7 @@ fn rand_block() -> [u8; 16] {
     let mut rng = random::thread_rng();
     let mut block: [u8; 16] = [0; 16];
     rng.fill_bytes(&mut block[..]);
+
+    println!("block:{}", HEXLOWER.encode(&block));
     block
 }
