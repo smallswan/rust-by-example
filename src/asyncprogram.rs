@@ -15,25 +15,27 @@ fn bar() -> impl std::future::Future<Output = u8> {
     }
 }
 
-// fn baz() -> impl std::future::Future<Output = u8>{
-// let closure = async move |x : u8| {
-//     bar().await + x
-// };
-//
-// closure(5)
-// }
+fn baz() -> impl std::future::Future<Output = u8> {
+    let x = 5;
+    // async move块
+    let closure = async move { bar().await + x };
+
+    closure
+}
 
 async fn hello_world() {
     println!("hello, world!");
 }
 
-use core::pin::Pin;
 use futures::channel::mpsc::{self, Receiver, Sender};
 use futures::executor::{self, ThreadPool, ThreadPoolBuilder};
 use futures::future::FutureExt;
 use futures::stream::{FusedStream, Stream, StreamExt};
 use futures::task::Poll;
+use std::marker::PhantomPinned;
+use std::pin::Pin;
 use std::{thread, time};
+
 struct Yield {
     rem: i32,
 }
@@ -55,6 +57,77 @@ impl futures::future::Future for Yield {
             Poll::Pending
         }
     }
+}
+
+#[derive(Debug)]
+struct Test {
+    a: String,
+    b: *const String,
+    _marker: PhantomPinned,
+}
+
+impl Test {
+    fn new(txt: &str) -> Self {
+        Test {
+            a: String::from(txt),
+            b: std::ptr::null(),
+            _marker: PhantomPinned, // This makes our type `!Unpin`
+        }
+    }
+
+    fn init<'a>(self: Pin<&'a mut Self>) {
+        let self_ref: *const String = &self.a;
+        let this = unsafe { self.get_unchecked_mut() };
+        this.b = self_ref;
+    }
+
+    fn a<'a>(self: Pin<&'a Self>) -> &'a str {
+        &self.get_ref().a
+    }
+
+    fn b<'a>(self: Pin<&'a Self>) -> &'a String {
+        assert!(
+            !self.b.is_null(),
+            "Test::b called without Test::init being called first"
+        );
+        unsafe { &*(self.b) }
+    }
+}
+/// Why Pinning
+/// file:///C:/repositories/rust/async-book/book/html/04_pinning/01_chapter.html
+#[test]
+fn why_pin() {
+    // let mut test1 = Test::new("test1");
+    // test1.init();
+    // let mut test2 = Test::new("test2");
+    // test2.init();
+
+    // println!("a: {}, b: {}", test1.a(), test1.b());
+    // std::mem::swap(&mut test1, &mut test2);
+    // test1.a = "I've totally changed now!".to_string();
+    // println!("a: {}, b: {}", test2.a(), test2.b());
+
+    // test1 is safe to move before we initialize it
+    let mut test1 = Test::new("test1");
+    // Notice how we shadow `test1` to prevent it from being accessed again
+    let mut test1 = unsafe { Pin::new_unchecked(&mut test1) };
+    Test::init(test1.as_mut());
+
+    let mut test2 = Test::new("test2");
+    let mut test2 = unsafe { Pin::new_unchecked(&mut test2) };
+    Test::init(test2.as_mut());
+
+    println!(
+        "a: {}, b: {}",
+        Test::a(test1.as_ref()),
+        Test::b(test1.as_ref())
+    );
+    // std::mem::swap(test1.get_mut(), test2.get_mut());
+    println!(
+        "a: {}, b: {}",
+        Test::a(test2.as_ref()),
+        Test::b(test2.as_ref())
+    );
 }
 
 #[test]
@@ -116,6 +189,10 @@ fn demo() {
         // 使用线程池来执行任务
         pool.spawn_ok(y);
     }
+
+    let demo = baz();
+    let result = block_on(demo);
+    println!("baz result:{}", result);
 
     // 主线程等待子线程完成后关闭
     let ten_millis = time::Duration::from_millis(10);
