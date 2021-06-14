@@ -25,10 +25,35 @@ async fn hello_world() {
     println!("hello, world!");
 }
 
+use core::pin::Pin;
 use futures::channel::mpsc::{self, Receiver, Sender};
-use futures::executor::{self, ThreadPool};
+use futures::executor::{self, ThreadPool, ThreadPoolBuilder};
 use futures::future::FutureExt;
 use futures::stream::{FusedStream, Stream, StreamExt};
+use futures::task::Poll;
+use std::{thread, time};
+struct Yield {
+    rem: i32,
+}
+
+impl futures::future::Future for Yield {
+    type Output = ();
+    fn poll(mut self: Pin<&mut Self>, ctx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
+        let handle = thread::current();
+        if self.rem == 0 {
+            let name = handle.name();
+            println!("{:?} ready", name);
+            Poll::Ready(())
+        } else {
+            let name = handle.name();
+            println!("{:?} self.rem:{}", name, self.rem);
+            self.rem -= 1;
+            ctx.waker().wake_by_ref();
+
+            Poll::Pending
+        }
+    }
+}
 
 #[test]
 fn demo() {
@@ -76,4 +101,21 @@ fn demo() {
     let values: Vec<i32> = executor::block_on(fut_values);
 
     println!("Values={:?}", values);
+
+    let mut builder = ThreadPoolBuilder::new();
+    builder.name_prefix("pool-");
+    builder.pool_size(5);
+    let pool = builder.create().unwrap();
+    use super::*;
+    for _ in 0..5 {
+        let y = Yield { rem: 10 };
+        // 使用主线程来执行任务
+        // block_on(y);
+        // 使用线程池来执行任务
+        pool.spawn_ok(y);
+    }
+
+    // 主线程等待子线程完成后关闭
+    let ten_millis = time::Duration::from_millis(10);
+    thread::sleep(ten_millis);
 }
