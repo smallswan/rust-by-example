@@ -981,6 +981,7 @@ dependencies = [
  "libsm",
  "num 0.4.0",
  "percent-encoding",
+ "pin-utils",
  "qrcode",
  "rand 0.7.3",
  "rayon",
