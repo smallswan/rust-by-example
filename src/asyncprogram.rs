@@ -2,11 +2,13 @@ extern crate futures;
 use futures::executor::block_on;
 use std::future::Future;
 
+// async函数
 async fn foo() -> u8 {
     5
 }
 
 fn bar() -> impl std::future::Future<Output = u8> {
+    //async 块
     async {
         let x: u8 = foo().await;
         x + 5
