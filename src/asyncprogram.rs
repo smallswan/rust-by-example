@@ -221,3 +221,68 @@ fn demo() {
     let ten_millis = time::Duration::from_millis(10);
     thread::sleep(ten_millis);
 }
+
+#[test]
+fn stream_multiple_futures() {
+    use futures::select;
+    use futures::SinkExt;
+    use pin_utils::pin_mut;
+
+    async fn send_recv() {
+        const BUFFER_SIZE: usize = 10;
+        let (mut tx, mut rx) = mpsc::channel::<i32>(BUFFER_SIZE);
+
+        tx.send(1).await.unwrap();
+        tx.send(2).await.unwrap();
+        drop(tx);
+
+        // `StreamExt::next` is similar to `Iterator::next`, but returns a
+        // type that implements `Future<Output = Option<T>>`.
+        assert_eq!(Some(1), rx.next().await);
+        assert_eq!(Some(2), rx.next().await);
+        assert_eq!(None, rx.next().await);
+        println!("send_recv done");
+    }
+    let future = send_recv();
+    block_on(future);
+
+    async fn task_one() { /* ... */
+    }
+    async fn task_two() { /* ... */
+    }
+
+    async fn race_tasks() {
+        let t1 = task_one().fuse();
+        let t2 = task_two().fuse();
+
+        pin_mut!(t1, t2);
+
+        //the futures used in select must implement both the Unpin trait and the FusedFuture trait.
+        select! {
+            () = t1 => println!("task one completed first"),
+            () = t2 => println!("task two completed first"),
+        }
+    }
+    let tasks = race_tasks();
+    block_on(tasks);
+
+    async fn count() {
+        let mut a_fut = futures::future::ready(4);
+        let mut b_fut = futures::future::ready(6);
+        let mut total = 0;
+
+        loop {
+            select! {
+                a = a_fut => total += a,
+                b = b_fut => total += b,
+                complete => break,
+                default => unreachable!(), // never runs (futures are ready, then complete)
+            };
+        }
+        assert_eq!(total, 10);
+        println!("total:{}", total);
+    }
+
+    let cnt = count();
+    block_on(cnt);
+}
