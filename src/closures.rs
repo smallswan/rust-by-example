@@ -143,6 +143,8 @@ fn iter_adaptors() {
         println!("{:?}", elt);
     }
 
+    //[0,1,2]中插入8
+    //use itertools::Itertools::intersperse;
     itertools::assert_equal((0..3).intersperse(8), vec![0, 8, 1, 8, 2]);
 
     // An adaptor that gathers elements in pairs

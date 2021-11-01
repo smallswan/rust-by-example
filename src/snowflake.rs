@@ -21,17 +21,17 @@ pub struct SnowflakeIdWorker {
 impl SnowflakeIdWorker {
     pub fn new(data_center_id: i64, worker_id: i64) -> SnowflakeIdWorker {
         if worker_id > MAX_WORKER_ID || worker_id < 0 {
-            panic!(format!(
+            panic!(
                 "worker Id can't be greater than {} or less than 0",
                 worker_id
-            ));
+            );
         }
 
         if data_center_id > MAX_DATA_CENTER_ID || data_center_id < 0 {
-            panic!(format!(
+            panic!(
                 "datacenter Id can't be greater than {} or less than 0",
                 data_center_id
-            ));
+            );
         }
 
         SnowflakeIdWorker {
@@ -46,10 +46,10 @@ impl SnowflakeIdWorker {
         //println!("data_center_id:{},worker_id:{},last_timestamp:{},sequence:{}",self.data_center_id,self.worker_id,self.last_timestamp,self.sequence);
         let mut timestamp = time_gen();
         if time_gen() < self.last_timestamp {
-            panic!(format!(
+            panic!(
                 "Clock moved backwards.  Refusing to generate id for {} milliseconds",
                 self.last_timestamp - timestamp
-            ));
+            );
         }
 
         if self.last_timestamp == timestamp {
