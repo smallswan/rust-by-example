@@ -145,7 +145,11 @@ fn iter_adaptors() {
 
     //[0,1,2]中插入8
     //use itertools::Itertools::intersperse;
-    itertools::assert_equal((0..3).intersperse(8), vec![0, 8, 1, 8, 2]);
+    itertools::assert_equal(
+        itertools::Itertools::intersperse((0..3), 8),
+        vec![0, 8, 1, 8, 2],
+    );
+    //itertools::assert_equal((0..3).intersperse(8), vec![0, 8, 1, 8, 2]);
 
     // An adaptor that gathers elements in pairs
     let pit = (0..4).batching(|it| match it.next() {
