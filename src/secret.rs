@@ -38,6 +38,58 @@ struct AlipayPayParam {
 
 pub trait AlipaySign {}
 
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn aes_gcm() {
+        use aes_gcm::aead::{Aead, NewAead};
+        use aes_gcm::{Aes256Gcm, Key, Nonce};
+        use data_encoding::HEXLOWER;
+        // Or `Aes128Gcm`
+        // 256 bits(32 bytes) key
+        // openssl rand -hex 32
+        // hex!() : converting hexadecimal string literals to a byte array
+        let key = Key::from_slice(&hex!(
+            "c2c567b1151904db13374ea7aef181a4b8509e331a7d6e952a11781d29ebfe52"
+        ));
+        let cipher = Aes256Gcm::new(key);
+
+        let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
+
+        let ciphertext = cipher
+            .encrypt(nonce, b"plaintext message".as_ref())
+            .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
+
+        println!("{}", HEXLOWER.encode(&ciphertext));
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext.as_ref())
+            .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
+
+        assert_eq!(&plaintext, b"plaintext message");
+    }
+
+    #[test]
+    fn chacha20poly1305() {
+        use chacha20poly1305::aead::{Aead, NewAead};
+        use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce}; // Or `XChaCha20Poly1305`
+        let key_hex = hex!("98baa9548506c53497bae1b098e85cf26b1359baca7e31ad0c7e93b26e8e79d6");
+        let key = Key::from_slice(&key_hex); // 32-bytes
+        let cipher = ChaCha20Poly1305::new(key);
+
+        let nonce = Nonce::from_slice(b"unique nonce"); // 12-bytes; unique per message
+
+        let ciphertext = cipher
+            .encrypt(nonce, b"plaintext message".as_ref())
+            .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext.as_ref())
+            .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
+
+        assert_eq!(&plaintext, b"plaintext message");
+    }
+}
+
 #[test]
 fn rust_crypt() {
     // create a SHA3-256 object
