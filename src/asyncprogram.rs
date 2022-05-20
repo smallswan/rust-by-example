@@ -18,9 +18,9 @@ fn bar() -> impl std::future::Future<Output = u8> {
 fn baz() -> impl std::future::Future<Output = u8> {
     let x = 5;
     // async move块
-    let closure = async move { bar().await + x };
-
-    closure
+    // let closure = async move { bar().await + x };
+    async move { bar().await + x }
+    // closure
 }
 
 async fn hello_world() {

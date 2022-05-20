@@ -261,12 +261,12 @@ pub fn verify_alipay_sign(params_map: HashMap<String, String>) -> Result<bool, &
 
     if let Some(param_sign) = params_map.get("sign") {
         if *param_sign == sign {
-            return Ok(true);
+            Ok(true)
         } else {
-            return Ok(false);
+            Ok(false)
         }
     } else {
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -455,7 +455,7 @@ fn big_int() {
 fn factorial(x: i32) -> BigInt {
     if let Some(mut facatorial) = 1.to_bigint() {
         for i in 1..(x + 1) {
-            facatorial = facatorial * i;
+            facatorial *= i;
         }
         facatorial
     } else {

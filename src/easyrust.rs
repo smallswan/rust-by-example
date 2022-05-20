@@ -31,7 +31,7 @@ impl Company {
     }
 }
 
-fn in_char_vec(char_vec: &Vec<char>, check: char) {
+fn in_char_vec(char_vec: &[char], check: char) {
     println!(
         "Is {} inside? {}",
         check,

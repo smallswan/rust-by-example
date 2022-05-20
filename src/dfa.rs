@@ -53,7 +53,7 @@ pub fn is_contains_sensitive_word(txt: &str, match_type: &MatchType) -> bool {
     let txt_vec: Vec<char> = txt.chars().collect();
     let mut i = 0;
     while i < len {
-        let length = check_sensitive_word(&txt, i, match_type);
+        let length = check_sensitive_word(txt, i, match_type);
         if length > 0 {
             is_contains = true;
             break;
@@ -71,7 +71,7 @@ pub fn find_sensitive_word(txt: &str, match_type: &MatchType) -> BTreeSet<String
     let txt_vec: Vec<char> = txt.chars().collect();
     let mut i = 0;
     while i < len {
-        let length = check_sensitive_word(&txt, i, match_type);
+        let length = check_sensitive_word(txt, i, match_type);
         if length > 0 {
             //存在,加入list中
             sensitive_word_set.insert(txt_vec[i..i + length].iter().collect());
@@ -92,7 +92,7 @@ fn check_sensitive_word(txt: &str, begin_index: usize, match_type: &MatchType) -
     let txt_vec: Vec<char> = txt.chars().collect();
     let len = txt.len();
     if let Some(word) = &txt_vec.get(begin_index) {
-        if let Some(swm) = SENSITIVE_WORD_MAP.get(&word) {
+        if let Some(swm) = SENSITIVE_WORD_MAP.get(word) {
             match_flag += 1;
             if (*swm).is_end == '1' {
                 last_match_length = match_flag;
@@ -168,7 +168,7 @@ fn recursive_find_map(
 
                 *i += 1;
                 recursive_find_map(
-                    &next_swm,
+                    next_swm,
                     txt_vec,
                     i,
                     match_flag,
@@ -186,11 +186,7 @@ fn recursive_build_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mu
         if let Some(now_map) = map.word_map.as_mut() {
             // let contains_key = now_map.contains_key(&ch);
 
-            if now_map.contains_key(&ch) {
-                if let Some(m) = now_map.get_mut(&ch) {
-                    recursive_build_map(&mut *m, &mut *chars, count);
-                }
-            } else {
+            if let std::collections::hash_map::Entry::Vacant(e) = now_map.entry(ch) {
                 let mut is_end = if *count == 0 { '1' } else { '0' };
                 let mut swm = SensitiveWordMap {
                     word: ch,
@@ -201,7 +197,10 @@ fn recursive_build_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mu
                 if let Some(m) = now_map.get_mut(&ch) {
                     recursive_build_map(&mut *m, &mut *chars, count);
                 }
+            }else if let Some(m) = now_map.get_mut(&ch) {
+                recursive_build_map(&mut *m, &mut *chars, count);
             }
+           
         }
     }
 }
@@ -381,5 +380,5 @@ fn set_iter() {
 
     println!("b_tree_set has {} items", b_tree_set.len());
 
-    println!("using {} coding rust program is greate", "VSCode");
+    println!("using VSCode coding rust program is greate");
 }

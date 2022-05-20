@@ -253,7 +253,7 @@ fn main() {
     show(rgb); //函数项隐式转换为函数指针
 
     //1. 函数项类型可以通过显式指定函数类型转换为一个函数指针类型
-    let c: fn(&str) -> RGB = rgb;
+    let c: fn(&str) -> Rgb = rgb;
     println!("size2 {:?}", mem::size_of_val(&c));
 
     show(c);
@@ -299,12 +299,12 @@ enum Color {
     B(i16),
 }
 
-type RGB = (i16, i16, i16);
+type Rgb = (i16, i16, i16);
 
-fn color(c: &str) -> RGB {
+fn color(c: &str) -> Rgb {
     (1, 1, 1)
 }
 
-fn show(c: fn(&str) -> RGB) {
+fn show(c: fn(&str) -> Rgb) {
     println!("{:?}", c("black"));
 }

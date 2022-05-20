@@ -20,14 +20,14 @@ pub struct SnowflakeIdWorker {
 
 impl SnowflakeIdWorker {
     pub fn new(data_center_id: i64, worker_id: i64) -> SnowflakeIdWorker {
-        if worker_id > MAX_WORKER_ID || worker_id < 0 {
+        if !(0..=MAX_WORKER_ID).contains(&worker_id) {
             panic!(
                 "worker Id can't be greater than {} or less than 0",
                 worker_id
             );
         }
 
-        if data_center_id > MAX_DATA_CENTER_ID || data_center_id < 0 {
+        if !(0..=MAX_DATA_CENTER_ID).contains(&data_center_id) {
             panic!(
                 "datacenter Id can't be greater than {} or less than 0",
                 data_center_id
