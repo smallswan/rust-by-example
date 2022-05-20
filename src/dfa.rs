@@ -197,10 +197,9 @@ fn recursive_build_map(map: &mut SensitiveWordMap, chars: &mut Chars, count: &mu
                 if let Some(m) = now_map.get_mut(&ch) {
                     recursive_build_map(&mut *m, &mut *chars, count);
                 }
-            }else if let Some(m) = now_map.get_mut(&ch) {
+            } else if let Some(m) = now_map.get_mut(&ch) {
                 recursive_build_map(&mut *m, &mut *chars, count);
             }
-           
         }
     }
 }

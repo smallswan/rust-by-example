@@ -13,6 +13,7 @@ mod concurrent;
 mod datetime;
 mod dfa;
 mod easyrust;
+mod io;
 mod random;
 mod secret;
 mod serializing;

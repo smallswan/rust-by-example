@@ -79,9 +79,9 @@ mod tests {
 
     #[test]
     fn chacha20poly1305() {
-        use data_encoding::HEXLOWER;
         use chacha20poly1305::aead::{Aead, NewAead};
-        use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce}; // Or `XChaCha20Poly1305`
+        use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+        use data_encoding::HEXLOWER; // Or `XChaCha20Poly1305`
         let key_hex = hex!("98baa9548506c53497bae1b098e85cf26b1359baca7e31ad0c7e93b26e8e79d6");
         let key = Key::from_slice(&key_hex); // 32-bytes
         let cipher = ChaCha20Poly1305::new(key);
@@ -93,15 +93,12 @@ mod tests {
             .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
 
         println!("{}", HEXLOWER.encode(&ciphertext));
-        
+
         let plaintext = cipher
             .decrypt(nonce, ciphertext.as_ref())
             .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
 
         assert_eq!(&plaintext, b"plaintext message");
-
-        
-
     }
 }
 
