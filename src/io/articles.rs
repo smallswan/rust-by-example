@@ -43,4 +43,47 @@ mod tests {
 
         Ok(())
     }
+
+    use std::collections::hash_map::Entry;
+    use std::collections::HashMap;
+    use std::fs::File;
+    use std::io::prelude::*;
+    use std::io::BufReader;
+    #[test]
+    fn come_on() {
+        let mut words: HashMap<String, i32> = HashMap::with_capacity(300);
+        match File::open("C:\\data\\寒窑赋.txt") {
+            Ok(f) => {
+                let reader = BufReader::new(f);
+                let lines = reader.lines();
+                for line in lines.map(|x| x.unwrap()) {
+                    println!("{}", line);
+
+                    line.chars().for_each(|c| {
+                        if c.is_alphabetic() {
+                            match words.entry(c.to_string()) {
+                                Entry::Occupied(entry) => *entry.into_mut() += 1,
+                                Entry::Vacant(entry) => {
+                                    *entry.insert(1);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            Err(e) => println!("{}", e),
+        }
+
+        println!("----------------");
+
+        let mut sorted: Vec<(String, i32)> = words
+            .iter()
+            .map(|(key, value)| (key.to_string(), *value))
+            .collect();
+        sorted.sort_by_key(|pair| pair.1);
+
+        sorted.iter().rev().for_each(|(key, value)| {
+            println!("{} {}", key, value);
+        });
+    }
 }
