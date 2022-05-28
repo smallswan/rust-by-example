@@ -38,8 +38,15 @@ struct AlipayPayParam {
 
 pub trait AlipaySign {}
 
+// use std::fs::File;
+use std::io::prelude::*;
+// use std::io::BufReader;
+use base64::encode;
+
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn hex() {
         use data_encoding::HEXLOWER;
@@ -75,6 +82,23 @@ mod tests {
             .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
 
         assert_eq!(&plaintext, b"plaintext message");
+
+        //
+        match File::open("C:\\data\\寒窑赋.txt") {
+            Ok(f) => {
+                let mut reader = BufReader::new(f);
+                let ciphertext = cipher
+                    .encrypt(nonce, reader.fill_buf().unwrap())
+                    .expect("encryption failure!");
+                println!("{:?}", encode(&ciphertext));
+
+                let plaintext = cipher
+                    .decrypt(nonce, ciphertext.as_ref())
+                    .expect("decryption failure!");
+                println!("{}", String::from_utf8(plaintext).unwrap());
+            }
+            Err(e) => println!("{}", e),
+        }
     }
 
     #[test]

@@ -1,14 +1,32 @@
 extern crate crossbeam_channel;
-
+#[cfg(test)]
+#[macro_use]
+extern crate hamcrest;
 extern crate chrono;
 extern crate image;
 use chrono::prelude::*;
 
 #[cfg(test)]
 mod tests {
+    use hamcrest::prelude::*;
+
+    #[test]
+    fn test_hamcrest() {
+        assert_that!("1234", matches_regex(r"\d"));
+        assert_that!("abc", does_not(match_regex(r"\d")));
+
+        assert_that!(4, all_of!(less_than(5), greater_than(3)));
+        assert_that!(
+            &vec![1, 2, 3],
+            all_of!(contains(vec![1, 2]), not(contains(vec![4])))
+        );
+    }
+
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
+
+        assert_that!(4, is(equal_to(2 + 2)));
     }
 
     #[test]
@@ -331,9 +349,9 @@ mod tests {
     use std::rc::Weak;
     #[derive(Debug)]
     struct Node {
-        value: i32,
-        parent: RefCell<Weak<Node>>,
-        children: RefCell<Vec<Rc<Node>>>,
+        pub value: i32,
+        pub parent: RefCell<Weak<Node>>,
+        pub children: RefCell<Vec<Rc<Node>>>,
     }
 
     /// 引用循环与内存泄漏, http://120.78.128.153/rustbook/ch15-06-reference-cycles.html
@@ -382,6 +400,8 @@ mod tests {
             Rc::strong_count(&leaf),
             Rc::weak_count(&leaf),
         );
+
+        println!("{} {:?}", &leaf.value, &leaf.children.borrow().len());
     }
 }
 
