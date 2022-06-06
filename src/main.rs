@@ -10,6 +10,7 @@ extern crate hex_literal;
 mod asyncprogram;
 mod closures;
 mod concurrent;
+mod datastructure;
 mod datetime;
 mod dfa;
 mod easyrust;
