@@ -83,6 +83,105 @@ fn move_ref_to_thread() {
     println!("main {:?}", v);
 }
 
+use rand::prelude::*;
+#[test]
+fn crossbeam_demo() {
+    let mut nums: Vec<i32> = (1..100).collect();
+    let mut rng = rand::thread_rng();
+
+    // 将nums 数组打乱顺序（shuffle 洗牌）
+    nums.shuffle(&mut rng);
+
+    println!("{:?}", nums);
+
+    let max = find_max(&nums[..]);
+    assert_eq!(Some(99), max);
+}
+
+// 将数组分成两个部分，并使用新的线程对它们进行处理
+fn find_max(arr: &[i32]) -> Option<i32> {
+    const THRESHOLD: usize = 2;
+
+    if arr.len() <= THRESHOLD {
+        return arr.iter().cloned().max();
+    }
+
+    let mid = arr.len() / 2;
+    let (left, right) = arr.split_at(mid);
+
+    crossbeam::scope(|s| {
+        let thread_l = s.spawn(|_| find_max(left));
+        let thread_r = s.spawn(|_| find_max(right));
+
+        let max_l = thread_l.join().unwrap()?;
+        let max_r = thread_r.join().unwrap()?;
+
+        Some(max_l.max(max_r))
+    })
+    .unwrap()
+}
+
+use ring::digest::{Context, Digest, SHA256};
+use std::fs::File;
+use std::io::{BufReader, Error, Read};
+use std::path::Path;
+use std::sync::mpsc::channel;
+use threadpool::ThreadPool;
+use walkdir::WalkDir;
+
+// Verify the iso extension
+fn is_iso(entry: &Path) -> bool {
+    match entry.extension() {
+        Some(e) if e.to_string_lossy().to_lowercase() == "txt" => true,
+        _ => false,
+    }
+}
+
+fn compute_digest<P: AsRef<Path>>(filepath: P) -> Result<(Digest, P), Error> {
+    let mut buf_reader = BufReader::new(File::open(&filepath)?);
+    let mut context = Context::new(&SHA256);
+    let mut buffer = [0; 1024];
+
+    loop {
+        let count = buf_reader.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        context.update(&buffer[..count]);
+    }
+
+    Ok((context.finish(), filepath))
+}
+
+#[test]
+#[ignore]
+fn iso_digest() -> Result<(), Error> {
+    let pool = ThreadPool::new(num_cpus::get());
+
+    let (tx, rx) = channel();
+
+    for entry in WalkDir::new("C:\\data")
+        .follow_links(true)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| !e.path().is_dir() && is_iso(e.path()))
+    {
+        let path = entry.path().to_owned();
+        let tx = tx.clone();
+        pool.execute(move || {
+            let digest = compute_digest(path);
+            tx.send(digest).expect("Could not send data!");
+        });
+    }
+
+    drop(tx);
+    for t in rx.iter() {
+        let (sha, path) = t?;
+        println!("{:?} {:?}", sha, path);
+    }
+    Ok(())
+}
+
 use rayon::prelude::*;
 #[test]
 fn rayon_par() {
