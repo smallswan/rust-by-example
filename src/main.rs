@@ -79,8 +79,8 @@ fn geometric_series_sum(a1: f64, q: f64, n: u32) -> f64 {
         _ => a1 * (1.0 - q.powf(n as f64)) / (1.0 - q),
     }
 }
-
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Hello, world!");
 
     let languages: [&str; 5] = ["C", "Java", "JavaScript", "Python", "Rust"];
@@ -267,6 +267,15 @@ fn main() {
     visible::outer_mod::inner_mod::crate_visible_fn();
 
     visible::outer_mod::foo();
+
+    minio_demo();
+
+    use std::{thread, time};
+
+    let ten_millis = time::Duration::from_secs(5);
+    let now = time::Instant::now();
+
+    thread::sleep(ten_millis);
 }
 
 const fn hello() -> &'static str {
@@ -309,4 +318,40 @@ fn color(c: &str) -> Rgb {
 
 fn show(c: fn(&str) -> Rgb) {
     println!("{:?}", c("black"));
+}
+
+async fn minio_demo() -> Result<()> {
+    println!("minio_demo ...");
+    minio().await?;
+
+    println!("minio_demo end");
+
+    Ok(())
+}
+
+use anyhow::Result;
+use s3::bucket::Bucket;
+use s3::creds::Credentials;
+use s3::region::Region;
+
+// -> std::result::Result<(), anyhow::Error>
+async fn minio() -> std::result::Result<(), anyhow::Error> {
+    println!("entern minio");
+    let bucket_name = "demo";
+    let region = Region::Custom {
+        region: "".into(),
+        endpoint: "http://127.0.0.1:9000".into(),
+    };
+    // let credentials = Credentials::default()?;
+    let credentials =
+        Credentials::new(Some("minioadmin"), Some("minioadmin"), None, None, None).unwrap();
+    let bucket = Bucket::new(bucket_name, region, credentials)?;
+
+    let results = bucket.list("/".to_string(), Some("/".to_string())).await?;
+    results.iter().for_each(|item| {
+        println!("file name : {}", item.name);
+    });
+
+    println!("minio demo ...");
+    Ok(())
 }

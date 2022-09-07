@@ -20,3 +20,6 @@ cargo test -- --nocapture random::tests::first_demo
 cargo test -- --nocapture tests::hof
 cargo test -- --nocapture sensitive_word
 ```
+```
+cargo run --example convert .\examples\scaledown\借条.jpeg  .\examples\scaledown\借条-half-height.jpeg
+```

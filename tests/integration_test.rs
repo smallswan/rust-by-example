@@ -36,3 +36,21 @@ fn rusty_book() {
 
     assert_eq!(vec, vec![0.618, 1.1, 1.123, 1.15, 2.0, 3.14, 5.5]);
 }
+
+use image::GenericImageView;
+use image::ImageFormat;
+use std::{fs::File, time::Instant};
+// use image::dynimage::DynamicImage;
+
+#[test]
+fn half_height() {
+    let mut img = image::open("examples/scaledown/借条.jpeg").unwrap();
+    let (width, height) = img.dimensions();
+    let timer = Instant::now();
+    let scaled = img.crop(0, 0, width, height / 2);
+    // println!("Scaled by {} in {}", name, Elapsed::from(&timer));
+    let mut output =
+        File::create(&format!("examples/scaledown/借条-{}.jpeg", "half-height")).unwrap();
+    scaled.write_to(&mut output, ImageFormat::Png).unwrap();
+    println!("{:?}", timer.elapsed());
+}
