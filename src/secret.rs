@@ -46,6 +46,39 @@ use base64::encode;
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn argon2() -> Result<(), argon2::password_hash::errors::Error> {
+        use argon2::{
+            password_hash::{
+                rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
+            },
+            Argon2,
+        };
+        use passwords::{analyzer, scorer};
+
+        let pwd = "ARG2on&@!";
+        let password = pwd.as_bytes(); // Bad password; don't actually use!
+        let salt = SaltString::generate(&mut OsRng);
+
+        // Argon2 with default params (Argon2id v19)
+        let argon2 = Argon2::default();
+
+        // Hash password to PHC string ($argon2id$v=19$...)
+        let password_hash = argon2.hash_password(password, &salt)?.to_string();
+
+        // Verify password against PHC string.
+        //
+        // NOTE: hash params from `parsed_hash` are used instead of what is configured in the
+        // `Argon2` instance.
+        let parsed_hash = PasswordHash::new(&password_hash)?;
+        assert!(Argon2::default()
+            .verify_password(password, &parsed_hash)
+            .is_ok());
+
+        println!("score:{}", scorer::score(&analyzer::analyze(pwd)));
+        println!("{}", &password_hash);
+        Ok(())
+    }
 
     #[test]
     fn hex() {
@@ -77,6 +110,7 @@ mod tests {
             .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
 
         println!("{}", HEXLOWER.encode(&ciphertext));
+        println!("{}", encode(&ciphertext));
         let plaintext = cipher
             .decrypt(nonce, ciphertext.as_ref())
             .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
