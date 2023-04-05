@@ -461,6 +461,7 @@ fn hex_encode() -> Result<(), DecodeError> {
 
     let decoded = HEXUPPER.decode(&encoded.into_bytes())?;
     assert_eq!(&decoded[..], &original[..]);
+    println!("{}", str::from_utf8(&decoded).unwrap());
 
     let cn = HEXUPPER.encode("功成不必在我".as_bytes());
     println!("{}", cn);
@@ -470,13 +471,21 @@ fn hex_encode() -> Result<(), DecodeError> {
 
 #[test]
 fn base64_demo() {
-    let hello = b"hello rustaceans";
+    let hello = b"hello rustaceans00";
     let encoded = base64::encode(hello);
     let decoded = base64::decode(&encoded).unwrap();
 
     println!("origin: {}", str::from_utf8(hello).unwrap());
     println!("base64 encoded: {}", encoded);
     println!("back to origin: {}", str::from_utf8(&decoded).unwrap());
+
+    // &[u8;T]/String <= Vec<u8> => Base64 String
+    let common_base64_str = base64::encode("中文@123&");
+    println!("common base64 string: {}", common_base64_str);
+    let common_vecu8 = base64::decode(&common_base64_str).unwrap();
+    println!("common string: {}", str::from_utf8(&common_vecu8).unwrap());
+
+    println!("道路安全千万条，安全第一条");
 }
 
 use num::bigint::{BigInt, ToBigInt};
@@ -605,4 +614,29 @@ fn rand_block() -> [u8; 16] {
 
     println!("block:{}", HEXLOWER.encode(&block));
     block
+}
+
+#[test]
+fn highwayhash() {
+    use highway::{HighwayHash, HighwayHasher, Key};
+
+    // Generate 128bit hash
+    let key = Key([1, 2, 3, 4]);
+    let mut hasher128 = HighwayHasher::new(key);
+    hasher128.append(&[255]);
+    let res128: [u64; 2] = hasher128.finalize128();
+    assert_eq!([0xbb007d2462e77f3c, 0x224508f916b3991f], res128);
+
+    // Generate 256bit hash
+    let key = Key([1, 2, 3, 4]);
+    let mut hasher256 = HighwayHasher::new(key);
+    hasher256.append(&[255]);
+    let res256: [u64; 4] = hasher256.finalize256();
+    let expected: [u64; 4] = [
+        0x7161cadbf7cd70e1,
+        0xaac4905de62b2f5e,
+        0x7b02b936933faa7,
+        0xc8efcfc45b239f8d,
+    ];
+    assert_eq!(expected, res256);
 }

@@ -4,7 +4,7 @@ use chrono::prelude::*;
 
 #[test]
 fn formatting_and_parsing() -> Result<(), ParseError> {
-    // 1. 格式化输出日期
+    // 1. DateTime -> &str (格式化输出日期)
     let dt = Utc.ymd(2014, 11, 28).and_hms(12, 0, 9);
     assert_eq!(
         dt.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -81,6 +81,8 @@ fn day_earlier(date_time: DateTime<Utc>) -> Option<DateTime<Utc>> {
 
 #[test]
 fn cal() {
+    use std::time::Instant;
+    let start = Instant::now();
     let now = Utc::now();
     println!("{}", now);
 
@@ -115,4 +117,13 @@ fn cal() {
         "Time in Rio de Janeiro now is {}",
         utc_time.with_timezone(&rio_timezone)
     );
+
+    let dt = Utc.ymd(1990, 4, 1);
+    let how_old_are_your = Utc.ymd(2023, 4, 1);
+    println!(
+        "I'am {} days(years?) ago 😂",
+        how_old_are_your.signed_duration_since(dt).num_days()
+    );
+
+    println!("test run {} millis", start.elapsed().as_millis());
 }
