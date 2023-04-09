@@ -17,10 +17,10 @@ pub fn rand_demo() {
     if rng.gen() {
         // random bool
         let x: f64 = rng.gen(); // random number in range [0, 1)
-        let y = rng.gen_range(-10.0, 10.0);
+        let y = rng.gen_range(-40.0..1.3e5);
         println!("x is: {}", x);
         println!("y is: {}", y);
-        println!("Number from 0 to 9: {}", rng.gen_range(0, 10));
+        println!("Number from 0 to 9: {}", rng.gen_range(0..10));
     }
 
     // Sometimes it's useful to use distributions directly:
