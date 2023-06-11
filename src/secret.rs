@@ -658,9 +658,53 @@ fn test_rsa() {
         .expect("failed to encrypt");
     assert_ne!(&data[..], &enc_data[..]);
 
+    println!("{:?}", enc_data);
+
     // Decrypt
     let dec_data = priv_key
         .decrypt(Pkcs1v15Encrypt, &enc_data)
         .expect("failed to decrypt");
     assert_eq!(&data[..], &dec_data[..]);
+}
+
+use jsonwebtoken::{Algorithm, EncodingKey,DecodingKey, Header,Validation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    aud: String,         // Optional. Audience
+    exp: usize,          // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
+    iat: usize,          // Optional. Issued at (as UTC timestamp)
+    iss: String,         // Optional. Issuer
+    nbf: usize,          // Optional. Not Before (as UTC timestamp)
+    sub: String,         // Optional. Subject (whom token refers to)
+}
+
+#[test]
+fn test_jwt() {
+    let mut header = Header::new(Algorithm::HS512);
+    header.kid = Some("blabla".to_owned());
+    let iat = Utc::now().timestamp() as usize;
+    let exp = iat + 86400;
+    // let token = encode(&header, &my_claims, &EncodingKey::from_secret("secret".as_ref()))?;
+    let my_claims = Claims {
+        sub: "token".to_owned(),
+        aud: "GEM".to_owned(),
+        exp,
+        iat,
+        iss: "zln".to_owned(),
+        nbf: exp,
+    };
+    let token = jsonwebtoken::encode(
+        &Header::default(),
+        &my_claims,
+        &EncodingKey::from_secret("secret".as_ref()),
+    )
+    .unwrap();
+    println!("{}", token);
+
+    if let Ok(jwt_token) = jsonwebtoken::decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()){
+        println!("{:?}", jwt_token);
+    }
+
 }
