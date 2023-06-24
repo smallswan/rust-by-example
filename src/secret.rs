@@ -89,6 +89,69 @@ mod tests {
         println!("{}", HEXLOWER.encode(plaintext));
     }
 
+    /// ECB加密模式不安全，容易受到“分组重放”攻击
+    #[test]
+    fn aes_ecb() {
+        use aes::cipher::generic_array::arr;
+        use aes::cipher::{
+            generic_array::GenericArray, BlockCipher, BlockDecrypt, BlockEncrypt, KeyInit,
+        };
+        use aes::Aes128;
+
+        let inscription = String::from(
+            "我们一定要建设一支海军，这支海军要能保卫我们的海防，有效地防御帝国主义的可能的侵略。",
+        )
+        .into_bytes();
+        println!("{:?}", inscription);
+        let inscription_bytes: [u8; 126] = [
+            230, 136, 145, 228, 187, 172, 228, 184, 128, 229, 174, 154, 232, 166, 129, 229, 187,
+            186, 232, 174, 190, 228, 184, 128, 230, 148, 175, 230, 181, 183, 229, 134, 155, 239,
+            188, 140, 232, 191, 153, 230, 148, 175, 230, 181, 183, 229, 134, 155, 232, 166, 129,
+            232, 131, 189, 228, 191, 157, 229, 141, 171, 230, 136, 145, 228, 187, 172, 231, 154,
+            132, 230, 181, 183, 233, 152, 178, 239, 188, 140, 230, 156, 137, 230, 149, 136, 229,
+            156, 176, 233, 152, 178, 229, 190, 161, 229, 184, 157, 229, 155, 189, 228, 184, 187,
+            228, 185, 137, 231, 154, 132, 229, 143, 175, 232, 131, 189, 231, 154, 132, 228, 190,
+            181, 231, 149, 165, 227, 128, 130,
+        ];
+        let key = GenericArray::from([0u8; 16]);
+        // let mut block = GenericArray::from_slice(&inscription);
+        let mut block = GenericArray::from([43u8; 16]);
+
+        // Initialize cipher
+        let cipher = Aes128::new(&key);
+
+        let block_copy = block.clone();
+
+        // Encrypt block in-place
+        cipher.encrypt_block(&mut block);
+
+        // And decrypt it back
+        cipher.decrypt_block(&mut block);
+        assert_eq!(block, block_copy);
+
+        // Implementation supports parallel block processing. Number of blocks
+        // processed in parallel depends in general on hardware capabilities.
+        // This is achieved by instruction-level parallelism (ILP) on a single
+        // CPU core, which is differen from multi-threaded parallelism.
+        let mut blocks = [block; 16];
+        cipher.encrypt_blocks(&mut blocks);
+
+        for block in blocks.iter_mut() {
+            cipher.decrypt_block(block);
+            assert_eq!(block, &block_copy);
+        }
+
+        // `decrypt_blocks` also supports parallel block processing.
+        cipher.decrypt_blocks(&mut blocks);
+
+        for block in blocks.iter_mut() {
+            cipher.encrypt_block(block);
+            assert_eq!(block, &block_copy);
+        }
+
+        println!("{}", base64::encode(block));
+    }
+
     #[test]
     fn aes_gcm() {
         use aes_gcm::aead::{Aead, NewAead};
@@ -667,17 +730,17 @@ fn test_rsa() {
     assert_eq!(&data[..], &dec_data[..]);
 }
 
-use jsonwebtoken::{Algorithm, EncodingKey,DecodingKey, Header,Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    aud: String,         // Optional. Audience
-    exp: usize,          // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    iat: usize,          // Optional. Issued at (as UTC timestamp)
-    iss: String,         // Optional. Issuer
-    nbf: usize,          // Optional. Not Before (as UTC timestamp)
-    sub: String,         // Optional. Subject (whom token refers to)
+    aud: String, // Optional. Audience
+    exp: usize, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
+    iat: usize, // Optional. Issued at (as UTC timestamp)
+    iss: String, // Optional. Issuer
+    nbf: usize, // Optional. Not Before (as UTC timestamp)
+    sub: String, // Optional. Subject (whom token refers to)
 }
 
 #[test]
@@ -703,8 +766,11 @@ fn test_jwt() {
     .unwrap();
     println!("{}", token);
 
-    if let Ok(jwt_token) = jsonwebtoken::decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()){
+    if let Ok(jwt_token) = jsonwebtoken::decode::<Claims>(
+        &token,
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ) {
         println!("{:?}", jwt_token);
     }
-
 }
