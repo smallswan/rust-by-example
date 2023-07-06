@@ -45,6 +45,8 @@ use base64::encode;
 
 #[cfg(test)]
 mod tests {
+    use image::EncodableLayout;
+
     use super::*;
     #[test]
     fn argon2() -> Result<(), argon2::password_hash::errors::Error> {
@@ -96,7 +98,7 @@ mod tests {
         use aes::cipher::{
             generic_array::GenericArray, BlockCipher, BlockDecrypt, BlockEncrypt, KeyInit,
         };
-        use aes::Aes128;
+        use aes::{Aes128,Aes256};
 
         let inscription = String::from(
             "我们一定要建设一支海军，这支海军要能保卫我们的海防，有效地防御帝国主义的可能的侵略。",
@@ -113,11 +115,13 @@ mod tests {
             228, 185, 137, 231, 154, 132, 229, 143, 175, 232, 131, 189, 231, 154, 132, 228, 190,
             181, 231, 149, 165, 227, 128, 130,
         ];
-        let key = GenericArray::from([0u8; 16]);
+        // let key = GenericArray::from([0u8; 16]);
+        let key = GenericArray::from_slice(&inscription[0..16]);
         // let mut block = GenericArray::from_slice(&inscription);
+        // 明文分组长度为128位（16字节）
         let mut block = GenericArray::from([43u8; 16]);
 
-        // Initialize cipher
+        // Initialize cipher  AES128 需要密钥128位（即16字节）
         let cipher = Aes128::new(&key);
 
         let block_copy = block.clone();
@@ -150,6 +154,13 @@ mod tests {
         }
 
         println!("{}", base64::encode(block));
+
+        let key = GenericArray::from_slice(&inscription[0..32]);
+        let cipher = Aes256::new(&key);
+
+        cipher.encrypt_block(&mut block);
+        println!("{}", base64::encode(block));
+
     }
 
     #[test]
@@ -166,7 +177,8 @@ mod tests {
         ));
         let cipher = Aes256Gcm::new(key);
 
-        let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
+        // 96-bits; unique per message
+        let nonce = Nonce::from_slice(b"unique nonce"); 
 
         let ciphertext = cipher
             .encrypt(nonce, b"plaintext message".as_ref())
@@ -181,13 +193,20 @@ mod tests {
         assert_eq!(&plaintext, b"plaintext message");
 
         //
-        match File::open("C:\\data\\寒窑赋.txt") {
+        match File::open("why-rust.txt") {
             Ok(f) => {
                 let mut reader = BufReader::new(f);
                 let ciphertext = cipher
                     .encrypt(nonce, reader.fill_buf().unwrap())
                     .expect("encryption failure!");
                 println!("{:?}", encode(&ciphertext));
+                //TODO 将密文保存到文件中
+                if let Ok(_)= std::fs::write("why-rust.crypto", &ciphertext) {
+                    
+                    let mut hasher = Sha3::sha3_256();
+                    hasher.input(ciphertext.as_bytes());
+                    println!("why-rust.crypto写入成功, sha3_256:{}", hasher.result_str());
+                }
 
                 let plaintext = cipher
                     .decrypt(nonce, ciphertext.as_ref())
@@ -756,19 +775,20 @@ fn test_jwt() {
         exp,
         iat,
         iss: "zln".to_owned(),
-        nbf: exp,
+        nbf: iat,
     };
+    let secret = "纨缟夏裔ChatGPT文心一言";
     let token = jsonwebtoken::encode(
         &Header::default(),
         &my_claims,
-        &EncodingKey::from_secret("secret".as_ref()),
+        &EncodingKey::from_secret(secret.as_ref()),
     )
     .unwrap();
     println!("{}", token);
 
     if let Ok(jwt_token) = jsonwebtoken::decode::<Claims>(
         &token,
-        &DecodingKey::from_secret("secret".as_ref()),
+        &DecodingKey::from_secret(secret.as_ref()),
         &Validation::default(),
     ) {
         println!("{:?}", jwt_token);
