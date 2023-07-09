@@ -74,6 +74,19 @@ fn json_file() {
         }
         Err(e) => panic!("can't open this file : {}", e),
     }
+
+    // 将文件读取为一个字符串
+    match std::fs::read_to_string("provinces.json") {
+        Ok(data) => {
+            println!("open provinces.json...");
+            let v: Vec<AdministrativeDivisions> = serde_json::from_str(&data).unwrap();
+
+            for ad in v {
+                println!("{:?}={:?}", ad.code, ad.name);
+            }
+        }
+        Err(e) => panic!("can't open this file : {}", e),
+    }
 }
 
 #[derive(Deserialize, Debug)]

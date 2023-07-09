@@ -98,7 +98,7 @@ mod tests {
         use aes::cipher::{
             generic_array::GenericArray, BlockCipher, BlockDecrypt, BlockEncrypt, KeyInit,
         };
-        use aes::{Aes128,Aes256};
+        use aes::{Aes128, Aes256};
 
         let inscription = String::from(
             "我们一定要建设一支海军，这支海军要能保卫我们的海防，有效地防御帝国主义的可能的侵略。",
@@ -160,7 +160,6 @@ mod tests {
 
         cipher.encrypt_block(&mut block);
         println!("{}", base64::encode(block));
-
     }
 
     #[test]
@@ -178,7 +177,7 @@ mod tests {
         let cipher = Aes256Gcm::new(key);
 
         // 96-bits; unique per message
-        let nonce = Nonce::from_slice(b"unique nonce"); 
+        let nonce = Nonce::from_slice(b"unique nonce");
 
         let ciphertext = cipher
             .encrypt(nonce, b"plaintext message".as_ref())
@@ -200,18 +199,20 @@ mod tests {
                     .encrypt(nonce, reader.fill_buf().unwrap())
                     .expect("encryption failure!");
                 println!("{:?}", encode(&ciphertext));
-                //TODO 将密文保存到文件中
-                if let Ok(_)= std::fs::write("why-rust.crypto", &ciphertext) {
-                    
+                //1. 将密文保存到文件中
+                if let Ok(_) = std::fs::write("why-rust.crypto", &ciphertext) {
                     let mut hasher = Sha3::sha3_256();
                     hasher.input(ciphertext.as_bytes());
                     println!("why-rust.crypto写入成功, sha3_256:{}", hasher.result_str());
                 }
 
-                let plaintext = cipher
-                    .decrypt(nonce, ciphertext.as_ref())
-                    .expect("decryption failure!");
-                println!("{}", String::from_utf8(plaintext).unwrap());
+                //2. 从文件中读取密文进行解密
+                if let Ok(cipher_data) = std::fs::read("why-rust.crypto") {
+                    let plaintext = cipher
+                        .decrypt(nonce, cipher_data.as_ref())
+                        .expect("decryption failure!");
+                    println!("{}", String::from_utf8(plaintext).unwrap());
+                }
             }
             Err(e) => println!("{}", e),
         }
