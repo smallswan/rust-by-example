@@ -638,10 +638,13 @@ pub fn trailing_zeroes_v2(n: i32) -> i32 {
     count_fives
 }
 
+use libsm::sm2::ecc::Point;
+use libsm::sm2::encrypt::{DecryptCtx, EncryptCtx};
 use libsm::sm2::signature::{SigCtx, Signature};
 use libsm::sm3::hash::Sm3Hash;
 use libsm::sm4::Cipher;
 use libsm::sm4::Mode;
+use num::BigUint;
 #[test]
 fn sm() {
     //SM3
@@ -657,11 +660,11 @@ fn sm() {
         0x10,
     ];
     //SM4
-    let cipher = Cipher::new(&key, Mode::Cbc);
+    let cipher = Cipher::new(&key, Mode::Cbc).unwrap();
 
     let iv = rand_block();
     let poem = String::from("断头今日意如何？创业艰难百战多。此去泉台招旧部 ，旌旗十万斩阎罗。");
-    let encrypt_bytes = cipher.encrypt(&poem.as_bytes(), &iv);
+    let encrypt_bytes = cipher.encrypt(&poem.as_bytes(), &iv).unwrap();
     println!("{}", base64::encode(&encrypt_bytes));
 
     let mut all_bytes = Vec::<u8>::with_capacity(128);
@@ -672,13 +675,15 @@ fn sm() {
     std::fs::write("poem.crypto", &all_bytes);
 
     if let Ok(cipher_data) = std::fs::read("poem.crypto") {
-        let cipher = Cipher::new(&cipher_data[0..16], Mode::Cbc);
-        let poem_bytes = cipher.decrypt(&cipher_data[32..], &cipher_data[16..32]);
+        let cipher = Cipher::new(&cipher_data[0..16], Mode::Cbc).unwrap();
+        let poem_bytes = cipher
+            .decrypt(&cipher_data[32..], &cipher_data[16..32])
+            .unwrap();
         let poem = String::from_utf8(poem_bytes).unwrap();
         println!("poem.crypto => {}", poem);
     }
 
-    let plaintext_bytes = cipher.decrypt(&encrypt_bytes, &iv);
+    let plaintext_bytes = cipher.decrypt(&encrypt_bytes, &iv).unwrap();
     let poem1 = String::from_utf8(plaintext_bytes.to_vec()).unwrap();
     println!("poem.plaintext=> {}", poem1);
 
@@ -688,19 +693,54 @@ fn sm() {
     let mut sw = Stopwatch::new();
     // SM2 签名速度快，验签速度慢
     let ctx = SigCtx::new();
-    let (pk, sk) = ctx.new_keypair();
+    // let (pk, sk) = ctx.new_keypair().unwrap();
+    // println!("{}", pk);
+    // println!("{}", sk);
+    
+    // let x = BigUint::parse_bytes(b"786fe10f87d8ddfeeeea9a4a49e63388e3b2a9e1b0a794907908f6123dbf6c6a", 16).unwrap();
+    // let y = BigUint::parse_bytes(b"7f68eae6b3455183f1c43bfcb78ad4f1733a0435e24b7d26a99296557bb88ce3", 16).unwrap();
 
-    println!("elapsed_ms 0:{:?}", sw.elapsed());
+    //序列化公钥
+    // let pk_v = ctx.serialize_pubkey(&pk, true).unwrap();
+    // println!("pk:  {}", base64::encode(&pk_v));
+    // println!("sk:  {}", sk);
+
+    let base64_pk = base64::decode("A8AG7dZ1AiuRHJ4Wumkt0ecGaVLGdgZXNcPO5YbvlUGl").unwrap();
+    let pk = ctx
+        .load_pubkey(&base64_pk)
+        .unwrap();
+
+    let sk = BigUint::parse_bytes(
+        b"65092340339322830568834503687920571658437417955632596748799794109412239395630",
+        10,
+    )
+    .unwrap();
+
+    println!("elapsed 0:{:?}", sw.elapsed());
 
     sw.restart();
-    let signature = ctx.sign(msg, &sk, &pk);
+    let signature = ctx.sign(msg, &sk, &pk).unwrap();
 
-    println!("elapsed_ms 1:{:?}", sw.elapsed());
+    println!("elapsed 1:{:?}", sw.elapsed());
 
     sw.restart();
     let valid = ctx.verify(msg, &pk, &signature);
 
-    println!("valid:{},elapsed_ms:{:?}", valid, sw.elapsed());
+    println!("valid:{},elapsed:{:?}", valid.unwrap(), sw.elapsed());
+
+    sw.restart();
+    let klen = msg.len();
+    let encrypt_ctx = EncryptCtx::new(klen, pk);
+    let cipher = encrypt_ctx.encrypt(msg).unwrap();
+
+    println!("elapsed 2:{:?}", sw.elapsed());
+
+    sw.restart();
+    let decrypt_ctx = DecryptCtx::new(klen, sk);
+    let plain = decrypt_ctx.decrypt(&cipher).unwrap();
+    assert_eq!(msg, plain);
+
+    println!("elapsed_ms 3:{:?}", sw.elapsed());
 }
 
 // rand 和 ring::rand冲突了
