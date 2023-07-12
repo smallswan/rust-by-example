@@ -644,32 +644,49 @@ use libsm::sm4::Cipher;
 use libsm::sm4::Mode;
 #[test]
 fn sm() {
-    let string = String::from("abc");
+    //SM3
+    let string = String::from("abc文心一言&ChatGPT");
     let mut hash = Sm3Hash::new(string.as_bytes());
     let digest: [u8; 32] = hash.get_hash();
 
-    let hex_str = HEXLOWER.encode(&digest);
-    println!("{}", hex_str);
+    let base64_str = base64::encode(&digest);
+    println!("{}", base64_str);
 
     let key: [u8; 16] = [
         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32,
         0x10,
     ];
+    //SM4
     let cipher = Cipher::new(&key, Mode::Cbc);
 
     let iv = rand_block();
     let poem = String::from("断头今日意如何？创业艰难百战多。此去泉台招旧部 ，旌旗十万斩阎罗。");
     let encrypt_bytes = cipher.encrypt(&poem.as_bytes(), &iv);
-    println!("{}", HEXLOWER.encode(&encrypt_bytes));
+    println!("{}", base64::encode(&encrypt_bytes));
+
+    let mut all_bytes = Vec::<u8>::with_capacity(128);
+    all_bytes.extend_from_slice(&key);
+    all_bytes.extend_from_slice(&iv);
+    all_bytes.extend_from_slice(&encrypt_bytes);
+
+    std::fs::write("poem.crypto", &all_bytes);
+
+    if let Ok(cipher_data) = std::fs::read("poem.crypto") {
+        let cipher = Cipher::new(&cipher_data[0..16], Mode::Cbc);
+        let poem_bytes = cipher.decrypt(&cipher_data[32..], &cipher_data[16..32]);
+        let poem = String::from_utf8(poem_bytes).unwrap();
+        println!("poem.crypto => {}", poem);
+    }
+
     let plaintext_bytes = cipher.decrypt(&encrypt_bytes, &iv);
     let poem1 = String::from_utf8(plaintext_bytes.to_vec()).unwrap();
-    println!("{}", poem1);
+    println!("poem.plaintext=> {}", poem1);
 
     let poem2 = String::from("南国烽烟正十年，此头须向国门悬。后死诸君多努力，捷报飞来当纸钱。");
     let msg = poem2.as_bytes();
 
     let mut sw = Stopwatch::new();
-    // SM2签名速度快，验签速度慢
+    // SM2 签名速度快，验签速度慢
     let ctx = SigCtx::new();
     let (pk, sk) = ctx.new_keypair();
 
