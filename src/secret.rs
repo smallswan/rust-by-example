@@ -696,7 +696,7 @@ fn sm() {
     // let (pk, sk) = ctx.new_keypair().unwrap();
     // println!("{}", pk);
     // println!("{}", sk);
-    
+
     // let x = BigUint::parse_bytes(b"786fe10f87d8ddfeeeea9a4a49e63388e3b2a9e1b0a794907908f6123dbf6c6a", 16).unwrap();
     // let y = BigUint::parse_bytes(b"7f68eae6b3455183f1c43bfcb78ad4f1733a0435e24b7d26a99296557bb88ce3", 16).unwrap();
 
@@ -706,9 +706,7 @@ fn sm() {
     // println!("sk:  {}", sk);
 
     let base64_pk = base64::decode("A8AG7dZ1AiuRHJ4Wumkt0ecGaVLGdgZXNcPO5YbvlUGl").unwrap();
-    let pk = ctx
-        .load_pubkey(&base64_pk)
-        .unwrap();
+    let pk = ctx.load_pubkey(&base64_pk).unwrap();
 
     let sk = BigUint::parse_bytes(
         b"65092340339322830568834503687920571658437417955632596748799794109412239395630",
@@ -784,27 +782,59 @@ fn highwayhash() {
 #[test]
 fn test_rsa() {
     use rand_core::CryptoRngCore;
+    use rsa::pkcs8::{
+        self, DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, LineEnding,
+    };
     use rsa::{Pkcs1v15Encrypt, PublicKey, RsaPrivateKey, RsaPublicKey};
 
+    let mut sw = Stopwatch::new();
     let mut rng = random::thread_rng();
     let bits = 2048;
-    let priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
-    let pub_key = RsaPublicKey::from(&priv_key);
+    // let priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
+    // let pub_key = RsaPublicKey::from(&priv_key);
+    println!("elapsed 0:{:?}", sw.elapsed());
 
+    let private_key_pem = std::fs::read_to_string("private_key.pem").unwrap();
+    let public_key_pem = std::fs::read_to_string("public_key.pem").unwrap();
+
+    let priv_key = RsaPrivateKey::from_pkcs8_pem(&private_key_pem).unwrap();
+    let pub_key = RsaPublicKey::from_public_key_pem(&public_key_pem).unwrap();
+
+    // 序列化公私钥
+    // if let Ok(priv_pem) = RsaPrivateKey::to_pkcs8_pem(&priv_key, pkcs8::LineEnding::default()){
+    //     std::fs::write("private_key.pem",priv_pem);
+    // }
+
+    // if let Ok(pub_pem) = RsaPublicKey::to_public_key_pem(&pub_key, pkcs8::LineEnding::default()){
+    //     std::fs::write("public_key.pem",pub_pem);
+    // }
+
+    sw.restart();
     // Encrypt
-    let data = b"hello world";
+    let plaintext = String::from(
+        "绝密级国家秘密是最重要的国家秘密，泄露会使国家安全和利益遭受特别严重的损害；",
+    );
+    let data = plaintext.as_bytes();
+    println!("data len is {}", data.len());
+
     let enc_data = pub_key
         .encrypt(&mut rng, Pkcs1v15Encrypt, &data[..])
         .expect("failed to encrypt");
+
+    println!("elapsed 1:{:?}", sw.elapsed());
     assert_ne!(&data[..], &enc_data[..]);
 
-    println!("{:?}", enc_data);
+    println!("{:?}", base64::encode(&enc_data[..]));
 
+    sw.restart();
     // Decrypt
     let dec_data = priv_key
         .decrypt(Pkcs1v15Encrypt, &enc_data)
         .expect("failed to decrypt");
+
+    println!("elapsed 2:{:?}", sw.elapsed());
     assert_eq!(&data[..], &dec_data[..]);
+    println!("{}", String::from_utf8_lossy(&dec_data[..]));
 }
 
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
