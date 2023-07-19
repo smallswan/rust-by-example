@@ -347,6 +347,17 @@ mod tests {
             &large_file_nonce,
         );
     }
+
+    #[test]
+    fn write_file() -> Result<(), anyhow::Error> {
+        let mut dist_file = File::create("abcd.txt")?;
+        dist_file.write("11abc111222".as_bytes());
+        dist_file.write("22def222333".as_bytes());
+        dist_file.write("33ghi333444".as_bytes());
+        // dist_file.flush();
+
+        Ok(())
+    }
 }
 
 #[test]

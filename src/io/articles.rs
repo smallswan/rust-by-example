@@ -155,4 +155,31 @@ mod tests {
         assert_eq!(&random_bytes[..], b"My loaf!");
         Ok(())
     }
+
+    #[test]
+    fn mmap_mut() -> Result<(), Error> {
+        use memmap::MmapMut;
+        use std::fs::OpenOptions;
+        use std::io::Write;
+        use std::ops::DerefMut;
+        use std::path::PathBuf;
+
+        // let file = File::options().write(true).open("abcd.txt")?;
+
+        let path: PathBuf = PathBuf::from("abcd.txt");
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&path)?;
+        file.set_len(30)?;
+
+        let mut mmap = unsafe { MmapMut::map_mut(&file)? };
+
+        // mmap.copy_from_slice(b"Hello, world!");
+        (&mut mmap[..]).write_all(b"Hello BeiJing! Hello, world!")?;
+        mmap.flush()?;
+
+        Ok(())
+    }
 }
