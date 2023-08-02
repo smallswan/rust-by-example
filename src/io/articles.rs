@@ -17,6 +17,8 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> io::Result<()> {
                 cb(&entry);
             }
         }
+    }else{
+        println!("{}", dir.display());
     }
     Ok(())
 }
@@ -24,10 +26,16 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn all_files() {
+        let path = Path::new(".");
+        println!("{:?}", path.metadata());
+    }
 
+    /// 遍历目录下文件
     #[test]
     fn famous() -> io::Result<()> {
-        let mut entries = fs::read_dir("C:\\data")?
+        let mut entries = fs::read_dir("examples/file")?
             .map(|res| res.map(|e| e.path()))
             .collect::<Result<Vec<_>, io::Error>>()?;
 
@@ -54,8 +62,9 @@ mod tests {
     use std::io::BufReader;
     #[test]
     fn come_on() {
+        //统计中文字数
         let mut words: HashMap<String, i32> = HashMap::with_capacity(300);
-        match File::open("C:\\data\\寒窑赋.txt") {
+        match File::open("examples\\file\\寒窑赋.txt") {
             Ok(f) => {
                 let reader = BufReader::new(f);
                 let lines = reader.lines();
@@ -79,6 +88,7 @@ mod tests {
 
         println!("----------------");
 
+        //根据字数多少从高到低排序
         let mut sorted: Vec<(String, i32)> = words
             .iter()
             .map(|(key, value)| (key.to_string(), *value))
