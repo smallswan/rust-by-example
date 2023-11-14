@@ -17,7 +17,7 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> io::Result<()> {
                 cb(&entry);
             }
         }
-    }else{
+    } else {
         println!("{}", dir.display());
     }
     Ok(())

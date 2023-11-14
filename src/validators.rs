@@ -92,6 +92,8 @@ pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
     }
 }
 
+/// 过滤公司名称中的特殊符号
+///
 pub fn filter_company_name(company_name: &str) -> String {
     let filtered = REGEX_NOT_COMPANY_NAME.replace_all(company_name, "");
     filtered.to_string()
@@ -169,8 +171,10 @@ mod tests {
             "100",
             "10",
             "10.25",
+            "-10.25",
             "1,234",
             "12345",
+            "-1,234",
             "abc",
         ];
         for number in numbers {
@@ -189,5 +193,12 @@ mod tests {
         let re = Regex::new(r"(?i)Δ+").unwrap();
         let mat = re.find("ΔδΔ").unwrap();
         assert_eq!((mat.start(), mat.end()), (0, 6));
+    }
+
+    #[test]
+    fn company_name() {
+        let filtered_name = filter_company_name("\\中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【】‘；：\"”“’。，、？《》\",\"Hong Kong ABC Company(DEF branch)（中文括号）");
+
+        println!("{}", filtered_name);
     }
 }

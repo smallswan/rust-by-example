@@ -163,6 +163,37 @@ mod tests {
     }
 
     #[test]
+    fn sensitive_data() {
+        use aes_gcm::aead::{Aead, NewAead};
+        use aes_gcm::{Aes256Gcm, Key, Nonce};
+        use data_encoding::HEXLOWER;
+        // Or `Aes128Gcm`
+        // 256 bits(32 bytes) key
+        // openssl rand -hex 32
+        // hex!() : converting hexadecimal string literals to a byte array
+        let key = Key::from_slice(&hex!(
+            "c2c567b1151904db13374ea7aef181a4b8509e331a7d6e952a11781d29ebfe52"
+        ));
+        let cipher = Aes256Gcm::new(key);
+
+        // 96-bits; unique per message
+        let nonce = Nonce::from_slice(b"unique nonce");
+
+        let datas = vec!["18076392119", "朱重八", "452726199205040216", "zln@163.com"];
+        for data in datas {
+            let ciphertext = cipher
+                .encrypt(nonce, data.as_ref())
+                .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
+
+            // println!("{}", HEXLOWER.encode(&ciphertext));
+            println!("{}", encode(&ciphertext));
+            let plaintext = cipher
+                .decrypt(nonce, ciphertext.as_ref())
+                .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
+        }
+    }
+
+    #[test]
     fn aes_gcm() {
         use aes_gcm::aead::{Aead, NewAead};
         use aes_gcm::{Aes256Gcm, Key, Nonce};
@@ -180,7 +211,7 @@ mod tests {
         let nonce = Nonce::from_slice(b"unique nonce");
 
         let ciphertext = cipher
-            .encrypt(nonce, b"plaintext message".as_ref())
+            .encrypt(nonce, b"18076392119".as_ref())
             .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
 
         println!("{}", HEXLOWER.encode(&ciphertext));
@@ -189,7 +220,7 @@ mod tests {
             .decrypt(nonce, ciphertext.as_ref())
             .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
 
-        assert_eq!(&plaintext, b"plaintext message");
+        assert_eq!(&plaintext, b"18076392119");
 
         //
         match File::open("why-rust.txt") {
@@ -856,6 +887,12 @@ fn sm() {
     assert_eq!(msg, plain);
 
     println!("elapsed_ms 3:{:?}", sw.elapsed());
+
+    // elapsed 0:0ns
+    // elapsed 1:40.1955766s
+    // valid:true,elapsed:12.69ms
+    // elapsed 2:13.7475ms
+    // elapsed_ms 3:11.2579ms
 }
 
 // rand 和 ring::rand冲突了
