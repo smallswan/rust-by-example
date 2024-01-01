@@ -59,7 +59,15 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
     let rfc2822 = DateTime::parse_from_rfc2822("Tue, 1 Jul 2003 10:52:37 +0200")?;
     println!("{}", rfc2822);
 
+    //RFC 3339遵循ISO 8601 DateTime格式。 唯一的区别是RFC允许我们用“空格”替换“ T”。
     let rfc3339 = DateTime::parse_from_rfc3339("1996-12-19T16:39:57-08:00")?;
+    println!("{}", rfc3339);
+
+    //“ Z”：代表零时区（UTC + 0）。 等于RFC 3339中的+00：00。
+    let rfc3339 = DateTime::parse_from_rfc3339("2019-10-12T07:20:50.52Z")?;
+    println!("{}", rfc3339);
+
+    let rfc3339 = DateTime::parse_from_rfc3339("2019-10-12T07:20:50.52+08:00")?;
     println!("{}", rfc3339);
 
     let time_only = NaiveTime::parse_from_str("23:56:04", "%H:%M:%S")?;
@@ -70,6 +78,11 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
 
     let no_timezone = NaiveDateTime::parse_from_str("2015-09-05 23:56:04", "%Y-%m-%d %H:%M:%S")?;
     println!("{}", no_timezone);
+
+    //1997-12-17 07:37:16-08 2004-05-03T17:30:08
+    let iso8601_str = "1997-12-17T07:37:16";
+    let moment: NaiveDateTime = iso8601_str.parse().unwrap();
+    println!("{}", moment);
     Ok(())
 }
 

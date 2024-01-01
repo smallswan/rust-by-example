@@ -18,7 +18,7 @@ lazy_static! {
         verify_code_map
     };
     // 公司名称需要排除的字符串，不包含中英文括号
-    static ref REGEX_NOT_COMPANY_NAME: Regex = Regex::new(r###"[`~!@#$%^&*+=|{}':;',\\.<>《》/?~！@#￥%……&*——+|{}\[\]【】‘；："”“’。，、？]"###).unwrap();
+    static ref REGEX_NOT_COMPANY_NAME: Regex = Regex::new(r###"[`~!@#$%^&*+=|{}':;',\\.<>《》/?~！@#￥%……&*——+|\-{}\[\]【】‘；："”“’。，、？]"###).unwrap();
     // 金钱（千分位）
     static ref MONEY_REGEX: Regex = Regex::new(r"^(-)?\d{1,3}(,\d{3})*(.\d+)?$").unwrap();
 }
@@ -96,7 +96,12 @@ pub fn is_unified_social_credit_identifier(identifier: &str) -> bool {
 ///
 pub fn filter_company_name(company_name: &str) -> String {
     let filtered = REGEX_NOT_COMPANY_NAME.replace_all(company_name, "");
-    filtered.to_string()
+    let temp = filtered.to_string();
+    //替换空格
+    // let blank = Regex::new("\\s").unwrap();
+    // blank.replace_all(&temp,"").to_string()
+    let temp = filtered.to_string();
+    temp.trim().to_owned()
 }
 
 pub fn is_money(number: &str) -> bool {
@@ -197,7 +202,7 @@ mod tests {
 
     #[test]
     fn company_name() {
-        let filtered_name = filter_company_name("\\中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【】‘；：\"”“’。，、？《》\",\"Hong Kong ABC Company(DEF branch)（中文括号）");
+        let filtered_name = filter_company_name("  \\  中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【北京顶流】‘；：\"”“’。，、？《上海硅谷》\",\"Hong Kong ABC Company(DEF branch)（中文括号）[深圳务实]");
 
         println!("{}", filtered_name);
     }

@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
     // why-rust.txt
     let source = File::open("C:\\data\\movies.json")?;
     let destination = File::create("C:\\data\\movies.zst")?;
-    match stream::copy_encode(&source, &destination, 3) {
+    match stream::copy_encode(&source, &destination, 7) {
         Ok(_) => {
             let metadata1 = source.metadata()?;
             let metadata2 = destination.metadata()?;
