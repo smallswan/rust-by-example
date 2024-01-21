@@ -41,6 +41,9 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
 
     println!("local:{}", local);
     println!("local timestamp_millis:{}", local.timestamp_millis());
+    println!("local:{}", local.format("%Y-%m-%d %H:%M:%S%z").to_string());
+
+    // DateTime<Local> -> UTC
 
     //
     let this_year = Utc.ymd(2020, 1, 1).and_hms(0, 0, 0);
@@ -53,7 +56,7 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
 
     println!("{:?}", age);
 
-    println!("{}", Local::now().to_rfc3339());
+    println!("local rfc3339： {}", Local::now().to_rfc3339());
 
     // 2. &str -> DateTime
     let rfc2822 = DateTime::parse_from_rfc2822("Tue, 1 Jul 2003 10:52:37 +0200")?;
@@ -67,8 +70,28 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
     let rfc3339 = DateTime::parse_from_rfc3339("2019-10-12T07:20:50.52Z")?;
     println!("{}", rfc3339);
 
-    let rfc3339 = DateTime::parse_from_rfc3339("2019-10-12T07:20:50.52+08:00")?;
+    //北京时间
+    let rfc3339 = DateTime::parse_from_rfc3339("2024-01-21T11:22:50.52+08:00")?;
     println!("{}", rfc3339);
+
+    //印度新德里时间
+    let rfc3339 = DateTime::parse_from_rfc3339("2024-01-21T11:22:50.52+05:30")?;
+    println!("{}", rfc3339);
+
+    //美国东部时间（EST）
+    let rfc3339 = DateTime::parse_from_rfc3339("2024-01-21T11:22:50.52-05:00")?;
+    println!("{}", rfc3339);
+
+    //太平洋标准时区（PST）
+    let rfc3339 = DateTime::parse_from_rfc3339("2024-01-21T11:22:50.52-08:00")?;
+    println!("{}", rfc3339);
+
+    // UTC+5:30   印度新德里时间       （东5.5区时间）
+    // UTC+8      北京时间             （东八区时间）
+    // UTC+9      东京时间             （东九区时间）
+    // UTC+10    （东10区时间）
+    // UTC-5      东部时间（EST）      （西五区时间）
+    // UTC-8      太平洋标准时区（PST）（西八区时间）
 
     let time_only = NaiveTime::parse_from_str("23:56:04", "%H:%M:%S")?;
     println!("{}", time_only);
@@ -78,6 +101,15 @@ fn formatting_and_parsing() -> Result<(), ParseError> {
 
     let no_timezone = NaiveDateTime::parse_from_str("2015-09-05 23:56:04", "%Y-%m-%d %H:%M:%S")?;
     println!("{}", no_timezone);
+
+    // 带时区的时间
+    assert_eq!(
+        NaiveDateTime::parse_from_str("2014-5-17T12:34:56+09:30", "%Y-%m-%dT%H:%M:%S%z"),
+        Ok(NaiveDate::from_ymd_opt(2014, 5, 17)
+            .unwrap()
+            .and_hms_opt(12, 34, 56)
+            .unwrap())
+    );
 
     //1997-12-17 07:37:16-08 2004-05-03T17:30:08
     let iso8601_str = "1997-12-17T07:37:16";
@@ -117,20 +149,53 @@ fn cal() {
 
     // 2. Local <--> Utc
     let local_time = Local::now();
+
+    // Local --> Utc
     let utc_time = DateTime::<Utc>::from_utc(local_time.naive_utc(), Utc);
+
+    let new_delhi_timezone = FixedOffset::east(5 * 3600 + 1800);
     let china_timezone = FixedOffset::east(8 * 3600);
+    let japan_timezone = FixedOffset::east(9 * 3600);
+
     let rio_timezone = FixedOffset::west(2 * 3600);
+    let est_timezone = FixedOffset::west(5 * 3600);
+    let pst_timezone = FixedOffset::west(8 * 3600);
+
     println!("Local time now is {}", local_time);
     println!("UTC time now is {}", utc_time);
+
+    // UTC --> Local
     println!(
-        "Time in Hong Kong now is {}",
+        "Time in Bei Jing now is {}",
         utc_time.with_timezone(&china_timezone)
     );
+
+    println!(
+        "Time in Tokyo  now is {}",
+        utc_time.with_timezone(&japan_timezone)
+    );
+
     println!(
         "Time in Rio de Janeiro now is {}",
         utc_time.with_timezone(&rio_timezone)
     );
 
+    println!(
+        "Time in New Delhi now is {}",
+        utc_time.with_timezone(&new_delhi_timezone)
+    );
+
+    println!(
+        "Time in EST now is {}",
+        utc_time.with_timezone(&est_timezone)
+    );
+
+    println!(
+        "Time in PST now is {}",
+        utc_time.with_timezone(&pst_timezone)
+    );
+
+    //计算时间间隔
     let dt = Utc.ymd(1990, 4, 1);
     let how_old_are_your = Utc.ymd(2023, 4, 1);
     println!(
@@ -139,4 +204,11 @@ fn cal() {
     );
 
     println!("test run {} millis", start.elapsed().as_millis());
+
+    let today = Utc.ymd(2024, 10, 1);
+    let founding_date = Utc.ymd(1949, 10, 1);
+    println!(
+        "建国{}年",
+        today.signed_duration_since(founding_date).num_days() / 365
+    );
 }
