@@ -1,7 +1,17 @@
 extern crate rand;
 use rand::prelude::*;
+use rand::rngs::OsRng;
 
 pub fn rand_demo() {
+    //OsRng 使用操作系统提供的真随机数生成器，因此生成的随机数更加安全。
+    let mut rng = OsRng;
+    let rand_number: u32 = rng.gen();
+    println!("rand_number : {}", rand_number);
+
+    let mut data = [0u8; 8];
+    rand::thread_rng().fill_bytes(&mut data);
+    println!("{:?}", data);
+
     // We can use random() immediately. It can produce values of many common types:
     let x: u8 = random();
     println!("{}", x);
@@ -48,6 +58,8 @@ mod tests {
 
     #[test]
     fn first_demo() {
+        super::rand_demo();
+
         if rand::random() {
             // generates a boolean
             // Try printing a random unicode code point (probably a bad idea)!

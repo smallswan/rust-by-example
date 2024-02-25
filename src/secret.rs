@@ -20,6 +20,12 @@ use chrono::prelude::*;
 use std::collections::HashMap;
 use stopwatch::Stopwatch;
 
+#[cfg(target_os = "linux")]
+use std::os::linux::fs::MetadataExt;
+#[cfg(target_os = "windows")]
+use std::os::windows::prelude::MetadataExt;
+use zstd::stream as zstd_stream;
+
 /// 支付宝-支付API， https://opendocs.alipay.com/apis/api_1/alipay.trade.pay
 #[derive(new, Debug)]
 struct AlipayPayParam {
@@ -356,6 +362,36 @@ mod tests {
         Ok(())
     }
 
+    fn compress(source: &str, destination: &str) -> Result<(), anyhow::Error> {
+        let source = File::open(source).unwrap();
+        let destination = File::create(destination).unwrap();
+        match zstd_stream::copy_encode(&source, &destination, 7) {
+            Ok(_) => {
+                let metadata1 = source.metadata().unwrap();
+                if let Ok(metadata2) = destination.metadata() {
+                    let size = metadata2.file_size();
+                    println!("compress success: {} => {}", metadata1.file_size(), size);
+                }
+            }
+            Err(e) => {
+                println!("copy_encode : {}", e)
+            }
+        }
+
+        Ok(())
+    }
+
+    fn decompress(source: &str, destination: &str) -> Result<(), anyhow::Error> {
+        // 解压zst文件
+        if let Ok(source) = File::open(source) {
+            if let Ok(destination) = File::create(destination) {
+                zstd_stream::copy_decode(source, destination);
+            }
+        }
+
+        Ok(())
+    }
+
     #[test]
     fn test_xchacha20_poly1305() {
         use random::{rngs::OsRng, RngCore};
@@ -364,19 +400,27 @@ mod tests {
         OsRng.fill_bytes(&mut large_file_key);
         OsRng.fill_bytes(&mut large_file_nonce);
 
+        //先压缩
+        compress("large_file.txt", "large_file.zst");
+
+        //后加密
         encrypt_large_file(
-            "large_file.txt",
+            "large_file.zst",
             "large_file.crypto",
             &large_file_key,
             &large_file_nonce,
         );
 
+        //先解密
         decrypt_large_file(
             "large_file.crypto",
-            "large_file_temp.txt",
+            "large_file.tmp.zst",
             &large_file_key,
             &large_file_nonce,
         );
+
+        //后解压
+        decompress("large_file.tmp.zst", "large_file_temp.txt");
     }
 
     #[test]
@@ -402,10 +446,10 @@ fn rust_crypt() {
     //    let res = hex.from_hex().unwrap();
     let hex = hasher.result_str();
 
-    println!("hex:{}", hex);
+    println!("hex1:{}", hex);
 
     let mut sha256 = Sha256::new();
-    sha256.input_str("hello world");
+    sha256.input_str("helloworld");
     let hex2 = sha256.result_str();
     println!("hex2:{}", hex2);
 
@@ -895,6 +939,72 @@ fn sm() {
     // elapsed_ms 3:11.2579ms
 }
 
+// use data_encoding::{DecodeError, HEXLOWER, HEXUPPER};
+
+#[test]
+fn sm3() {
+    use sm3::{Digest, Sm3};
+
+    //1. 计算字符串SM3哈希值
+    let mut hasher1 = Sm3::new();
+    hasher1.update(b"123456");
+    let hash = hasher1.finalize();
+
+    let hash_hex = HEXLOWER.encode(&hash);
+    println!("SM3: {}", hash_hex);
+    // assert_eq!(
+    //     hash_hex,
+    //     "c70c5f73da4e8b8b73478af54241469566f6497e16c053a03a0170fa00078283"
+    // );
+
+
+    //2. 一次性计算文件的SM3哈希值
+    let mut hasher2 = Sm3::new();
+    if let Ok(poem) = fs::read("why-rust.txt") {
+        hasher2.update(&poem);
+        let hash = hasher2.finalize();
+
+        let hash= HEXLOWER.encode(&hash);
+        println!("why-rust.txt SM3: {}",hash);
+    }
+
+    //3. 计算大文件的SM3哈希值
+    let mut hasher3 = Sm3::new();
+    const BUFFER_LEN: usize = 512;
+    let mut buffer = [0u8; BUFFER_LEN];
+
+    if let Ok(mut source_file) = File::open("examples\\file\\sm2.pdf") {
+        loop {
+            let read_count = source_file.read(&mut buffer).unwrap();
+
+            if read_count == BUFFER_LEN {
+                hasher3.update(&buffer);
+            } else {
+                hasher3.update(&buffer[..read_count]);
+                let hash = hasher3.finalize();
+
+                let hash = HEXLOWER.encode(&hash);
+                println!("sm2.pdf SM3: {}", hash);
+                break;
+            }
+        }
+    }
+}
+
+use std::fs;
+#[test]
+fn sm4() {
+    let key = rand_block();
+    let cipher = Cipher::new(&key, Mode::Cbc).unwrap();
+
+    let iv = rand_block();
+
+    if let Ok(poem) = fs::read("why-rust.txt") {
+        let encrypt_bytes = cipher.encrypt(&poem, &iv).unwrap();
+        println!("{}", base64::encode(&encrypt_bytes));
+    }
+}
+
 // rand 和 ring::rand冲突了
 extern crate rand as random;
 fn rand_block() -> [u8; 16] {
@@ -1035,4 +1145,37 @@ fn test_jwt() {
     ) {
         println!("{:?}", jwt_token);
     }
+}
+
+
+#[test]
+fn ecdh(){
+
+    use k256::{EncodedPoint, PublicKey, ecdh::EphemeralSecret};
+    use rand_core::OsRng; // requires 'getrandom' feature
+    
+    // Alice
+    let alice_secret = EphemeralSecret::random(&mut OsRng);
+    let alice_pk_bytes = EncodedPoint::from(alice_secret.public_key());
+    
+    // Bob
+    let bob_secret = EphemeralSecret::random(&mut OsRng);
+    let bob_pk_bytes = EncodedPoint::from(bob_secret.public_key());
+    
+    // Alice decodes Bob's serialized public key and computes a shared secret from it
+    let bob_public = PublicKey::from_sec1_bytes(bob_pk_bytes.as_ref())
+        .expect("bob's public key is invalid!"); // In real usage, don't panic, handle this!
+    
+    let alice_shared = alice_secret.diffie_hellman(&bob_public);
+    
+    // Bob decodes Alice's serialized public key and computes the same shared secret
+    let alice_public = PublicKey::from_sec1_bytes(alice_pk_bytes.as_ref())
+        .expect("alice's public key is invalid!"); // In real usage, don't panic, handle this!
+    
+    let bob_shared = bob_secret.diffie_hellman(&alice_public);
+    
+    // Both participants arrive on the same shared secret
+    assert_eq!(alice_shared.raw_secret_bytes(), bob_shared.raw_secret_bytes());
+    println!("{}", HEXLOWER.encode(alice_shared.raw_secret_bytes()));
+    
 }
