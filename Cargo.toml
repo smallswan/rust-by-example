@@ -61,3 +61,7 @@ calamine = "0.23.1"
 tar = "0.4.40"
 sm3 = "0.4.2"
 k256 = { version = "0.13.3", features = ["ecdh"]}
+p256 = "0.13.2"
+elliptic-curve = { version = "0.13.8", features = ["pkcs8","jwk","pem"]}
+rand_chacha = "0.3.1"
+base64ct = "1.6.0"

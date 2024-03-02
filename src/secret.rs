@@ -1,6 +1,7 @@
 extern crate chrono;
 extern crate crypto;
 
+
 use crypto::digest::Digest;
 use crypto::md5::Md5;
 use crypto::sha2::Sha256;
@@ -957,15 +958,14 @@ fn sm3() {
     //     "c70c5f73da4e8b8b73478af54241469566f6497e16c053a03a0170fa00078283"
     // );
 
-
     //2. 一次性计算文件的SM3哈希值
     let mut hasher2 = Sm3::new();
     if let Ok(poem) = fs::read("why-rust.txt") {
         hasher2.update(&poem);
         let hash = hasher2.finalize();
 
-        let hash= HEXLOWER.encode(&hash);
-        println!("why-rust.txt SM3: {}",hash);
+        let hash = HEXLOWER.encode(&hash);
+        println!("why-rust.txt SM3: {}", hash);
     }
 
     //3. 计算大文件的SM3哈希值
@@ -1147,35 +1147,60 @@ fn test_jwt() {
     }
 }
 
-
 #[test]
-fn ecdh(){
-
-    use k256::{EncodedPoint, PublicKey, ecdh::EphemeralSecret};
+fn ecdh() {
+    use k256::{ecdh::EphemeralSecret, EncodedPoint, PublicKey};
     use rand_core::OsRng; // requires 'getrandom' feature
-    
+
     // Alice
     let alice_secret = EphemeralSecret::random(&mut OsRng);
     let alice_pk_bytes = EncodedPoint::from(alice_secret.public_key());
-    
+
     // Bob
     let bob_secret = EphemeralSecret::random(&mut OsRng);
     let bob_pk_bytes = EncodedPoint::from(bob_secret.public_key());
-    
+
     // Alice decodes Bob's serialized public key and computes a shared secret from it
-    let bob_public = PublicKey::from_sec1_bytes(bob_pk_bytes.as_ref())
-        .expect("bob's public key is invalid!"); // In real usage, don't panic, handle this!
-    
+    let bob_public =
+        PublicKey::from_sec1_bytes(bob_pk_bytes.as_ref()).expect("bob's public key is invalid!"); // In real usage, don't panic, handle this!
+
     let alice_shared = alice_secret.diffie_hellman(&bob_public);
-    
+
     // Bob decodes Alice's serialized public key and computes the same shared secret
     let alice_public = PublicKey::from_sec1_bytes(alice_pk_bytes.as_ref())
         .expect("alice's public key is invalid!"); // In real usage, don't panic, handle this!
-    
+
     let bob_shared = bob_secret.diffie_hellman(&alice_public);
-    
+
     // Both participants arrive on the same shared secret
-    assert_eq!(alice_shared.raw_secret_bytes(), bob_shared.raw_secret_bytes());
+    assert_eq!(
+        alice_shared.raw_secret_bytes(),
+        bob_shared.raw_secret_bytes()
+    );
     println!("{}", HEXLOWER.encode(alice_shared.raw_secret_bytes()));
-    
+}
+
+#[test]
+fn ecc() {
+    use base64ct::LineEnding;
+    use elliptic_curve::SecretKey;
+    use p256::NistP256;
+    use rand_core::OsRng; // requires 'getrandom' feature
+
+    // 1. 生成私钥
+    let key: SecretKey<NistP256> = SecretKey::random(&mut OsRng);
+    let pem_str = key.to_sec1_pem(LineEnding::LF);
+    println!("{:?}", pem_str);
+    println!("{:#?}", key);
+    // 根据私钥生成公钥
+    println!("{:?}", key.public_key());
+
+    //2. 根据PEM格式字符串恢复私钥
+    let private_key : Result<SecretKey<NistP256>, elliptic_curve::Error> = elliptic_curve::SecretKey::from_sec1_pem("-----BEGIN EC PRIVATE KEY-----\nMGsCAQEEIKUhSRir8XkO1BcqcgdgFxtapjz0UFyzwQQpcCJ6IZhcoUQDQgAEWsVX\ns/5B/A4rWT4hRk6EBP/tzRzQjJKZIoh9WQbV4eots1mPwiio6XYhcYD+zauInLNq\nK1i6dCgXjJ0GB1FEhA==\n-----END EC PRIVATE KEY-----");
+
+    //3. 根据私钥生成公钥
+    let public_key = private_key.unwrap().public_key();
+    println!("{:?}", public_key);
+
+//    Ok(())
 }
