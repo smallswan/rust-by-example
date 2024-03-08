@@ -1,3 +1,6 @@
+use itertools::Itertools;
+use regex::Captures;
+use regex::NoExpand;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -21,6 +24,9 @@ lazy_static! {
     static ref REGEX_NOT_COMPANY_NAME: Regex = Regex::new(r###"[`~!@#$%^&*+=|{}':;',\\.<>《》/?~！@#￥%……&*——+|\-{}\[\]【】‘；："”“’。，、？]"###).unwrap();
     // 金钱（千分位）
     static ref MONEY_REGEX: Regex = Regex::new(r"^(-)?\d{1,3}(,\d{3})*(.\d+)?$").unwrap();
+    //驼峰命名
+    static ref CAMEL_TO_SNAKE1: Regex = Regex::new(r"(.)([A-Z][a-z]+)").unwrap();
+    static ref CAMEL_TO_SNAKE2: Regex = Regex::new(r"([a-z0-9])([A-Z])").unwrap();
 }
 
 /// 18位身份证号校验
@@ -106,6 +112,42 @@ pub fn filter_company_name(company_name: &str) -> String {
 
 pub fn is_money(number: &str) -> bool {
     MONEY_REGEX.is_match(number)
+}
+
+/// 驼峰命名转为蛇形命名
+pub fn camel_to_snake(origin: &str) -> String {
+    let result0 = CAMEL_TO_SNAKE1.replace_all(origin, |caps: &Captures| {
+        format!("{}_{}", &caps[1], &caps[2])
+    });
+    let result = CAMEL_TO_SNAKE2.replace_all(&result0, |caps: &Captures| {
+        format!("{}_{}", &caps[1], &caps[2])
+    });
+    result.to_uppercase()
+}
+
+pub fn snake_to_pascal(origin: &str) -> String {
+    // origin.split('_');
+    let word_vec: Vec<&str> = origin.split('_').collect();
+    //每个单词首字母大写
+    word_vec
+        .iter()
+        .map(|&word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                Some(ch) => ch.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .join("")
+}
+
+pub fn snake_to_camel(s: &str) -> String {
+    let result = snake_to_pascal(s);
+    let mut chars = result.chars();
+    match chars.next() {
+        Some(ch) => ch.to_lowercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    }
 }
 
 #[cfg(test)]
@@ -205,5 +247,26 @@ mod tests {
         let filtered_name = filter_company_name("  \\  中道集团--中付支付（广州分公司）~!@#$%^&*+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*+|{}\\[\\]【北京顶流】‘；：\"”“’。，、？《上海硅谷》\",\"Hong Kong ABC Company(DEF branch)（中文括号）[深圳务实]");
 
         println!("{}", filtered_name);
+    }
+
+    #[test]
+    fn fileds() {
+        let fileds_vec = vec!["FalconHeavyRocket", "HTTPResponseCodeXYZ"];
+        fileds_vec.iter().for_each(|&filed| {
+            let result = camel_to_snake(filed);
+            println!("{}", result);
+        });
+
+        let columns_vec = vec!["falcon_heavy_rocket", "http_response_code_xyz"];
+        columns_vec.iter().for_each(|&column| {
+            let result = snake_to_pascal(column);
+            println!("{}", result);
+        });
+
+        let columns_vec = vec!["falcon_heavy_rocket", "http_response_code_xyz"];
+        columns_vec.iter().for_each(|&column| {
+            let result = snake_to_camel(column);
+            println!("{}", result);
+        });
     }
 }

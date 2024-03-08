@@ -1,7 +1,6 @@
 extern crate chrono;
 extern crate crypto;
 
-
 use crypto::digest::Digest;
 use crypto::md5::Md5;
 use crypto::sha2::Sha256;
@@ -920,6 +919,7 @@ fn sm() {
     println!("valid:{},elapsed:{:?}", valid.unwrap(), sw.elapsed());
 
     sw.restart();
+    //SM2加密、解密
     let klen = msg.len();
     let encrypt_ctx = EncryptCtx::new(klen, pk);
     let cipher = encrypt_ctx.encrypt(msg).unwrap();
@@ -931,7 +931,7 @@ fn sm() {
     let plain = decrypt_ctx.decrypt(&cipher).unwrap();
     assert_eq!(msg, plain);
 
-    println!("elapsed_ms 3:{:?}", sw.elapsed());
+    println!("elapsed 3:{:?}", sw.elapsed());
 
     // elapsed 0:0ns
     // elapsed 1:40.1955766s
@@ -1202,5 +1202,5 @@ fn ecc() {
     let public_key = private_key.unwrap().public_key();
     println!("{:?}", public_key);
 
-//    Ok(())
+    //    Ok(())
 }
