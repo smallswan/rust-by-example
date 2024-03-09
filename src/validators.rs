@@ -125,6 +125,28 @@ pub fn camel_to_snake(origin: &str) -> String {
     result.to_uppercase()
 }
 
+use once_cell::sync::Lazy;
+/// 驼峰命名转为蛇形命名
+fn camel_to_snake_v2(haystack: &str) -> String {
+    static RE1: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"(?P<first>.)(?P<second>[A-Z][a-z]+)").unwrap());
+
+    let result = RE1
+        .replace_all(haystack, |caps: &Captures| {
+            format!("{}_{}", &caps["first"], &caps["second"])
+        })
+        .to_string();
+
+    static RE2: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"(?P<first>[a-z0-9])(?P<second>[A-Z])").unwrap());
+
+    RE2.replace_all(&result, |caps: &Captures| {
+        format!("{}_{}", &caps["first"], &caps["second"])
+    })
+    .to_string()
+}
+
+/// 驼峰命名转为帕斯卡命名法
 pub fn snake_to_pascal(origin: &str) -> String {
     // origin.split('_');
     let word_vec: Vec<&str> = origin.split('_').collect();
@@ -141,6 +163,7 @@ pub fn snake_to_pascal(origin: &str) -> String {
         .join("")
 }
 
+/// 蛇形命名转驼峰命名
 pub fn snake_to_camel(s: &str) -> String {
     let result = snake_to_pascal(s);
     let mut chars = result.chars();
@@ -240,6 +263,22 @@ mod tests {
         let re = Regex::new(r"(?i)Δ+").unwrap();
         let mat = re.find("ΔδΔ").unwrap();
         assert_eq!((mat.start(), mat.end()), (0, 6));
+
+        let re = Regex::new(
+            r"(?x)
+        (?P<year>\d{4})  # the year
+        -
+        (?P<month>\d{2}) # the month
+        -
+        (?P<day>\d{2})   # the day
+        ",
+        )
+        .unwrap();
+
+        let caps = re.captures("BC 2010-03-14").unwrap();
+        assert_eq!("2010", &caps["year"]);
+        assert_eq!("03", &caps["month"]);
+        assert_eq!("14", &caps["day"]);
     }
 
     #[test]
@@ -267,6 +306,22 @@ mod tests {
         columns_vec.iter().for_each(|&column| {
             let result = snake_to_camel(column);
             println!("{}", result);
+        });
+
+        use regex::RegexSet;
+
+        let set = RegexSet::new(&[r"(.)([A-Z][a-z]+)", r"([a-z0-9])([A-Z])"]).unwrap();
+
+        let match_vec: Vec<_> = set.matches("FalconHeavyRocket").into_iter().collect();
+        println!("{:?}", match_vec);
+
+        let match_vec: Vec<_> = set.matches("falconHeavyRocket").into_iter().collect();
+        println!("{:?}", match_vec);
+
+        let fileds_vec = vec!["FalconHeavyRocket", "HTTPResponseCodeXYZ"];
+        fileds_vec.iter().for_each(|&filed| {
+            let result = camel_to_snake_v2(filed);
+            println!("{:?}", result);
         });
     }
 }
